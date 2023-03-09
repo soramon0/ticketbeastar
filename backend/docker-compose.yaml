@@ -1,0 +1,25 @@
+version: '3.1'
+
+services:
+  db:
+    image: postgres:14.5
+    container_name: ticketbeast_database
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    volumes:
+      - ticketbeastdb:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: dev_db
+
+  adminer:
+    image: adminer
+    container_name: ticketbeast_db_studio
+    restart: unless-stopped
+    ports:
+      - 8080:8080
+
+volumes:
+  ticketbeastdb:
