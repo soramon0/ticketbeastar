@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"ticketbeastar/pkg/configs"
 	"ticketbeastar/pkg/controllers"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dbfixture"
 )
 
 func TestUsersController(t *testing.T) {
@@ -22,6 +25,11 @@ func TestUsersController(t *testing.T) {
 
 	t.Run("List", func(t *testing.T) {
 		ts.setup(t)
+		err := loadUsersFixtures(ts.db)
+		if err != nil {
+			t.Fatalf("loadUsersFixtures() err %v; want nil", err)
+		}
+
 		defer ts.teardown(t)
 
 		testUsersListing(t, ts)
@@ -31,7 +39,6 @@ func TestUsersController(t *testing.T) {
 
 func testUsersListing(t *testing.T, ts *testServer) {
 	userC := controllers.NewUsers(ts.us, ts.log)
-
 	ts.app.Get("/api/v1/users", userC.GetUsers)
 	// http.Request
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
@@ -70,9 +77,8 @@ func newTestServer() *testServer {
 
 func (ts *testServer) setup(t *testing.T) {
 	_, err := ts.db.NewCreateTable().Model((*models.User)(nil)).Exec(context.Background())
-
 	if err != nil {
-		t.Fatalf("Create users table err %v; want nil", err)
+		t.Fatalf("NewCreateTable() err %v; want nil", err)
 	}
 }
 
@@ -83,4 +89,17 @@ func (ts *testServer) teardown(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Drop users table err %v; want nil", err)
 	}
+}
+
+func loadUsersFixtures(db *bun.DB) error {
+	fixture := dbfixture.New(db)
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil
+	}
+	dir := filepath.Join(cwd, "..", "migrations", "fixtures")
+	if err := fixture.Load(context.Background(), os.DirFS(dir), "users.yaml"); err != nil {
+		return err
+	}
+	return nil
 }

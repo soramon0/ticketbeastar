@@ -1,0 +1,4 @@
+- model: User
+  rows:
+    - name: John Smith
+    - name: Jonh Doe

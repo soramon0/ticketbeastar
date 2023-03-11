@@ -11,7 +11,6 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/driver/pgdriver"
 	"github.com/uptrace/bun/extra/bundebug"
-	"github.com/uptrace/bun/migrate"
 	"github.com/urfave/cli/v2"
 )
 
@@ -25,9 +24,8 @@ func OpenConnection(dsn string, l *log.Logger) *bun.DB {
 
 	cliApp := &cli.App{
 		Name: "bun",
-
 		Commands: []*cli.Command{
-			migrations.NewMigratorCommand(migrate.NewMigrator(db, migrations.Migrations)),
+			migrations.NewDbCommand(db),
 		},
 	}
 
