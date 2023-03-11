@@ -2,12 +2,10 @@ package controllers_test
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"io"
 	"log"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"testing"
 	"ticketbeastar/pkg/configs"
 	"ticketbeastar/pkg/controllers"
@@ -15,9 +13,9 @@ import (
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/pkg/utils"
 
+	"github.com/go-faker/faker/v4"
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dbfixture"
 )
 
 func TestUsersController(t *testing.T) {
@@ -25,32 +23,38 @@ func TestUsersController(t *testing.T) {
 
 	t.Run("List", func(t *testing.T) {
 		ts.setup(t)
-		err := loadUsersFixtures(ts.db)
-		if err != nil {
-			t.Fatalf("loadUsersFixtures() err %v; want nil", err)
-		}
-
 		defer ts.teardown(t)
-
 		testUsersListing(t, ts)
 	})
 
 }
 
 func testUsersListing(t *testing.T, ts *testServer) {
+	users, err := createUsers(ts.db, 5)
+	if err != nil {
+		t.Fatalf("createUsers() err %v; want nil", err)
+	}
+
 	userC := controllers.NewUsers(ts.us, ts.log)
 	ts.app.Get("/api/v1/users", userC.GetUsers)
-	// http.Request
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
-
 	resp, err := ts.app.Test(req)
 	if err != nil {
 		t.Fatal("GET /api/v1/users", err)
 	}
 
-	if resp.StatusCode == fiber.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Println(string(body)) // => Hello, World!
+	if resp.StatusCode != fiber.StatusOK {
+		t.Fatalf("statusCode = %d; want %d", resp.StatusCode, fiber.StatusOK)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	var apiResponse models.APIResponse
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
+	}
+	if apiResponse.Count != len(*users) {
+		log.Fatalf("apiResponse.Count incorrect. want %d; got %d", apiResponse.Count, len(*users))
 	}
 }
 
@@ -91,15 +95,35 @@ func (ts *testServer) teardown(t *testing.T) {
 	}
 }
 
-func loadUsersFixtures(db *bun.DB) error {
-	fixture := dbfixture.New(db)
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil
+func createUsers(db *bun.DB, size uint) (*[]models.User, error) {
+	var users []models.User
+	var i uint
+	for i = 1; i <= size; i++ {
+		user, err := createUser(db, false)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, *user)
 	}
-	dir := filepath.Join(cwd, "..", "migrations", "fixtures")
-	if err := fixture.Load(context.Background(), os.DirFS(dir), "users.yaml"); err != nil {
-		return err
+
+	_, err := db.NewInsert().Model(&users).Exec(context.Background())
+	return &users, err
+}
+
+func createUser(db *bun.DB, insert bool) (*models.User, error) {
+	user := &models.User{Name: faker.Name()}
+
+	if insert {
+		res, err := db.NewInsert().Model(user).Exec(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		id, err := res.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		user.Id = id
 	}
-	return nil
+
+	return user, nil
 }
