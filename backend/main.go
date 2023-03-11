@@ -13,7 +13,7 @@ import (
 
 func main() {
 	logger := utils.InitLogger()
-	db := database.OpenConnection(logger)
+	db := database.OpenConnection(utils.GetDatabaseURL(), logger)
 	defer database.CloseConnection(db)
 
 	app := fiber.New(configs.FiberConfig())

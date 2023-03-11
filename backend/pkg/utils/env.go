@@ -13,21 +13,22 @@ func checkEnv(envName string) (string, error) {
 	return v, nil
 }
 
-func GetDatabaseBindAdress() string {
-	proto, err := checkEnv("DB_PORTOCAL")
-	Must(err)
-	user, err := checkEnv("DB_USER")
-	Must(err)
-	pass, err := checkEnv("DB_PASSWORD")
-	Must(err)
-	host, err := checkEnv("DB_HOST")
-	Must(err)
-	port, err := checkEnv("DB_PORT")
-	Must(err)
-	dbName := GetDatabaseName()
+func GetDatabaseURL() string {
+	url, err := checkEnv("DB_URL")
+	if err != nil {
+		url = "postgres://postgres:example@127.0.0.1:5432/dev_db?sslmode=disable"
+	}
 
-	// eg. mongodb://user:password@mongo:27017/
-	return fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable", proto, user, pass, host, port, dbName)
+	return url
+}
+
+func GetTestDatabaseURL() string {
+	url := os.Getenv("TEST_DB_URL")
+	if url == "" {
+		url = "postgres://postgres:example@127.0.0.1:5433/test_db?sslmode=disable"
+	}
+
+	return url
 }
 
 func GetServerBindAddress() string {
@@ -40,8 +41,10 @@ func GetServerBindAddress() string {
 }
 
 func GetServerReadTimeout() string {
-	v, err := checkEnv("SERVER_READ_TIMEOUT")
-	Must(err)
+	v, _ := checkEnv("SERVER_READ_TIMEOUT")
+	if v == "" {
+		return "60"
+	}
 
 	return v
 }

@@ -15,8 +15,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func OpenConnection(l *log.Logger) *bun.DB {
-	dsn := utils.GetDatabaseBindAdress()
+func OpenConnection(dsn string, l *log.Logger) *bun.DB {
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 
