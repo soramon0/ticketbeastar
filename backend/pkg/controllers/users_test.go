@@ -56,6 +56,9 @@ func testUsersListing(t *testing.T, ts *testServer) {
 	if apiResponse.Count != len(*users) {
 		log.Fatalf("apiResponse.Count incorrect. want %d; got %d", apiResponse.Count, len(*users))
 	}
+	if apiResponse.Error != nil {
+		log.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)
+	}
 }
 
 type testServer struct {
