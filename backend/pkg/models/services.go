@@ -5,13 +5,16 @@ import (
 )
 
 type Services struct {
-	User UserService
+	User    UserService
+	Concert ConcertService
 }
 
 func NewServices(db *bun.DB) *Services {
 	us := NewUserService(db)
+	cs := NewConcertService(db)
 
 	return &Services{
-		User: us,
+		User:    us,
+		Concert: cs,
 	}
 }

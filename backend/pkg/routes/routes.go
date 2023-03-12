@@ -13,5 +13,6 @@ func Register(a *fiber.App, s *models.Services, l *log.Logger) {
 	middleware.FiberMiddleware(a)
 
 	registerUserRoutes(a, s, l)
+	registerConcertRoutes(a, s, l)
 	registerNotFoundRoute(a)
 }
