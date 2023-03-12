@@ -3,6 +3,7 @@ module ticketbeastar
 go 1.20
 
 require (
+	github.com/go-faker/faker/v4 v4.1.0
 	github.com/gofiber/fiber/v2 v2.42.0
 	github.com/uptrace/bun v1.1.12
 	github.com/uptrace/bun/dbfixture v1.1.12
@@ -15,7 +16,6 @@ require (
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/fatih/color v1.14.1 // indirect
-	github.com/go-faker/faker/v4 v4.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
