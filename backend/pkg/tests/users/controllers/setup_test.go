@@ -38,7 +38,7 @@ func newTestServer() *testServer {
 func (ts *testServer) setup(t *testing.T) {
 	_, err := ts.db.NewCreateTable().Model((*models.User)(nil)).Exec(context.Background())
 	if err != nil {
-		t.Fatalf("NewCreateTable() err %v; want nil", err)
+		t.Fatalf("NewCreateTable(User) err %v; want nil", err)
 	}
 }
 
@@ -70,15 +70,10 @@ func createUser(db *bun.DB, insert bool) (*models.User, error) {
 	user := &models.User{Name: faker.Name()}
 
 	if insert {
-		res, err := db.NewInsert().Model(user).Exec(context.Background())
+		_, err := db.NewInsert().Model(user).Exec(context.Background())
 		if err != nil {
 			return nil, err
 		}
-		id, err := res.LastInsertId()
-		if err != nil {
-			return nil, err
-		}
-		user.Id = id
 	}
 
 	return user, nil
