@@ -180,7 +180,7 @@ func NewDbCommand(db *bun.DB) *cli.Command {
 							}
 
 							// Register models before loading fixtures.
-							db.RegisterModel((*models.User)(nil))
+							db.RegisterModel((*models.User)(nil), (*models.Concert)(nil))
 							fixture := dbfixture.New(db)
 							if err := fixture.Load(context.Background(), os.DirFS(dir), fileNames...); err != nil {
 								return err

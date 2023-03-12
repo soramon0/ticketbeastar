@@ -1,0 +1,4 @@
+- model: Concert
+  rows:
+    - name: Adele
+    - name: Burner Man
