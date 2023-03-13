@@ -6,5 +6,5 @@ import (
 )
 
 func InitLogger() *log.Logger {
-	return log.New(os.Stdout, "soramon0/ticketBeast ", log.LstdFlags)
+	return log.New(os.Stdout, "[soramon0/ticketBeast] ", log.LstdFlags)
 }
