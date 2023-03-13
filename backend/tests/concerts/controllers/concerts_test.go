@@ -12,7 +12,7 @@ import (
 func TestConcertsController(t *testing.T) {
 	ts := newTestServer()
 
-	t.Run("List", func(t *testing.T) {
+	t.Run("List single concert", func(t *testing.T) {
 		ts.setup(t)
 		defer ts.teardown(t)
 		testConcertListing(t, ts)
