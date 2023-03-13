@@ -29,7 +29,7 @@ function Concert({ concert }: Props) {
         <div className="flex items-start gap-4">
           <ClockIcon className="h-6 w-6 text-gray-600" />
           <p className="font-semibold text-gray-700">
-            Doors at {concert.date.formattedHours}
+            Doors at {concert.date.formattedStartTime}
           </p>
         </div>
         <div className="flex items-start gap-4">

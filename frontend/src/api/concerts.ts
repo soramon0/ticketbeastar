@@ -11,7 +11,7 @@ export const concertSchema = z.object({
   date: z.coerce.date().transform(date => ({
     value: date,
     formatted: format(date, 'LLLL dd, yyyy'),
-    formattedHours: format(date, 'HH:mmaaa'),
+    formattedStartTime: format(date, 'HH:mmaaa'),
   })),
   ticket_price: z.number().transform(price => ({
     value: price,
