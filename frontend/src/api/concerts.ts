@@ -8,14 +8,11 @@ export const concertSchema = z.object({
   id: z.number(),
   title: z.string(),
   subtitle: z.string(),
-  date: z.string().transform(dateStr => {
-    const date = new Date(dateStr);
-    return {
-      value: date,
-      formatted: format(date, 'LLLL dd, yyyy'),
-      formattedHours: format(date, 'HH:mmaaa'),
-    };
-  }),
+  date: z.coerce.date().transform(date => ({
+    value: date,
+    formatted: format(date, 'LLLL dd, yyyy'),
+    formattedHours: format(date, 'HH:mmaaa'),
+  })),
   ticket_price: z.number().transform(price => ({
     value: price,
     formatted: formatCurrency({ amount: price / 100 }),
@@ -26,8 +23,8 @@ export const concertSchema = z.object({
   state: z.string(),
   zip: z.string(),
   additional_information: z.string(),
-  created_at: z.string().transform(date => new Date(date)),
-  updated_at: z.string().transform(date => new Date(date)),
+  created_at: z.coerce.date(),
+  updated_at: z.coerce.date(),
 });
 
 export type IConcert = z.infer<typeof concertSchema>;
