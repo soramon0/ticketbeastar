@@ -10,6 +10,7 @@ import (
 	"ticketbeastar/pkg/configs"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
+	"ticketbeastar/pkg/routes"
 	"ticketbeastar/pkg/utils"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,12 +28,13 @@ func newTestServer() *testServer {
 	logger := utils.InitLogger()
 	app := fiber.New(configs.FiberConfig())
 	db := database.OpenConnection(utils.GetTestDatabaseURL(), logger)
-	cs := models.NewConcertService(db)
+	services := models.NewServices(db)
+	routes.Register(app, services, logger)
 
 	return &testServer{
 		app: app,
 		db:  db,
-		cs:  cs,
+		cs:  services.Concert,
 		log: logger,
 	}
 }
@@ -69,7 +71,7 @@ func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCo
 		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
 	}
 	if apiResponse.Count != wantCount {
-		log.Fatalf("apiResponse.Count mismatch. want %d; got %d", apiResponse.Count, wantCount)
+		log.Fatalf("apiResponse.Count mismatch. want %d; got %d", wantCount, apiResponse.Count)
 	}
 	if wantError == "" && apiResponse.Error != nil {
 		log.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)

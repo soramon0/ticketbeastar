@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http/httptest"
 	"testing"
-	"ticketbeastar/pkg/controllers"
 	"ticketbeastar/pkg/models"
 
 	"github.com/gofiber/fiber/v2"
@@ -29,8 +28,6 @@ func testUsersListing(t *testing.T, ts *testServer) {
 		t.Fatalf("createUsers() err %v; want nil", err)
 	}
 
-	userC := controllers.NewUsers(ts.us, ts.log)
-	ts.app.Get("/api/v1/users", userC.GetUsers)
 	req := httptest.NewRequest("GET", "/api/v1/users", nil)
 	resp, err := ts.app.Test(req)
 	if err != nil {

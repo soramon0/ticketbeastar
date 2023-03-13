@@ -7,6 +7,7 @@ import (
 	"ticketbeastar/pkg/configs"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
+	"ticketbeastar/pkg/routes"
 	"ticketbeastar/pkg/utils"
 
 	"github.com/go-faker/faker/v4"
@@ -25,12 +26,13 @@ func newTestServer() *testServer {
 	logger := utils.InitLogger()
 	app := fiber.New(configs.FiberConfig())
 	db := database.OpenConnection(utils.GetTestDatabaseURL(), logger)
-	us := models.NewUserService(db)
+	services := models.NewServices(db)
+	routes.Register(app, services, logger)
 
 	return &testServer{
 		app: app,
 		db:  db,
-		us:  us,
+		us:  services.User,
 		log: logger,
 	}
 }

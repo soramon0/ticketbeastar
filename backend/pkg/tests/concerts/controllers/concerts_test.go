@@ -1,8 +1,8 @@
 package controllers_test
 
 import (
+	"fmt"
 	"testing"
-	"ticketbeastar/pkg/controllers"
 	"ticketbeastar/pkg/models"
 	"time"
 
@@ -41,9 +41,7 @@ func testConcertListing(t *testing.T, ts *testServer) {
 		t.Fatalf("Create(concert) err = %v, want nil", err)
 	}
 
-	concertsC := controllers.NewConcerts(ts.cs, ts.log)
-	endpoint := "/api/v1/concerts"
-	ts.app.Get(endpoint, concertsC.GetConcerts)
-
-	ts.hitGetEndpoint(t, endpoint, fiber.StatusOK, 1, "")
+	endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
+	res := ts.hitGetEndpoint(t, endpoint, fiber.StatusOK, 0, "")
+	fmt.Println(res)
 }
