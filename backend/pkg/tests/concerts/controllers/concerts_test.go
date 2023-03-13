@@ -20,21 +20,21 @@ func TestConcertsController(t *testing.T) {
 }
 
 func testConcertListing(t *testing.T, ts *testServer) {
-	_, err := time.Parse(time.RFC822, "02 Dec 06 08:00 MST")
+	date, err := time.Parse(time.RFC822, "02 Dec 06 08:00 MST")
 	if err != nil {
 		t.Fatalf("time.Parse() err %v; want nil", err)
 	}
 	concert := models.Concert{
-		Name: "The Red Chord",
-		// Subtitle:            "with Animosity and Lethargy",
-		// Date:                date,
-		// TicketPrice:         3250,
-		// Venue:               "The Mosh Pit",
-		// VenueAddress:        "123 Example Lane",
-		// City:                "Golang city",
-		// State:               "On",
-		// Zip:                 "17916",
-		// AddionalInformation: "For tickets, call (555) 555-5555",
+		Title:                 "The Red Chord",
+		Subtitle:              "with Animosity and Lethargy",
+		Date:                  date,
+		TicketPrice:           3250,
+		Venue:                 "The Mosh Pit",
+		VenueAddress:          "123 Example Lane",
+		City:                  "Golang city",
+		State:                 "On",
+		Zip:                   "17916",
+		AdditionalInformation: "For tickets, call (555) 555-5555",
 	}
 	err = ts.cs.Create(&concert)
 	if err != nil {

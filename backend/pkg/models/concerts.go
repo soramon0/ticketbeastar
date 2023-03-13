@@ -10,8 +10,19 @@ import (
 type Concert struct {
 	bun.BaseModel `bun:"table:concerts,alias:c"`
 
-	Id   int64  `bun:"id,pk,autoincrement" json:"id"`
-	Name string `bun:"name,notnull" json:"name"`
+	Id                    int64     `bun:"id,pk,autoincrement" json:"id"`
+	Title                 string    `bun:"title,notnull" json:"title"`
+	Subtitle              string    `bun:"subtitle,notnull" json:"subtitle"`
+	Date                  time.Time `bun:"date,notnull" json:"date"`
+	TicketPrice           int64     `bun:"ticket_price,notnull" json:"ticket_price"`
+	Venue                 string    `bun:"venue,notnull" json:"venue"`
+	VenueAddress          string    `bun:"venue_address,notnull" json:"venue_address"`
+	City                  string    `bun:"city,notnull" json:"city"`
+	State                 string    `bun:"state,notnull" json:"state"`
+	Zip                   string    `bun:"zip,notnull" json:"zip"`
+	AdditionalInformation string    `bun:"additional_information,type:text,notnull" json:"additional_information"`
+	CreatedAt             time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
+	UpdatedAt             time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 }
 
 type ConcertService interface {
