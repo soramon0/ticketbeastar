@@ -5,7 +5,7 @@ import {
   MapPinIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/solid';
-import type { Concert as IConcert } from '@/api/concerts';
+import type { IConcert } from '@/api/concerts';
 import { formatCurrency } from '@/utils';
 import { format } from 'date-fns';
 
