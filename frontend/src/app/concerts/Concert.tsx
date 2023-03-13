@@ -5,9 +5,7 @@ import {
   MapPinIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/solid';
-import format from 'date-fns/format';
 import type { IConcert } from '@/api/concerts';
-import { formatCurrency } from '@/utils';
 
 interface Props {
   concert: IConcert;
@@ -25,19 +23,19 @@ function Concert({ concert }: Props) {
         <div className="flex items-start gap-4">
           <CalendarDaysIcon className="h-6 w-6 text-gray-600" />
           <p className="font-semibold text-gray-700">
-            {format(concert.date, 'LLLL dd, yyyy')}
+            {concert.date.formatted}
           </p>
         </div>
         <div className="flex items-start gap-4">
           <ClockIcon className="h-6 w-6 text-gray-600" />
           <p className="font-semibold text-gray-700">
-            Doors at {format(concert.date, 'HH:mmaaa')}
+            Doors at {concert.date.formattedHours}
           </p>
         </div>
         <div className="flex items-start gap-4">
           <CurrencyDollarIcon className="h-6 w-6 text-gray-600" />
           <p className="font-semibold text-gray-700">
-            {formatCurrency({ amount: concert.ticket_price / 100 })}
+            {concert.ticket_price.formatted}
           </p>
         </div>
         <div className="flex items-start gap-4">
