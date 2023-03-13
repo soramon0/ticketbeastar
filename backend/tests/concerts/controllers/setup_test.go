@@ -12,6 +12,7 @@ import (
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/pkg/routes"
 	"ticketbeastar/pkg/utils"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/uptrace/bun"
@@ -82,4 +83,69 @@ func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCo
 		}
 	}
 	return &apiResponse
+}
+
+func (ts *testServer) createConcert(t *testing.T, overrides *models.Concert, dateStr string, insert bool) *models.Concert {
+	if dateStr == "" {
+		dateStr = "02 Dec 06 08:00 MST"
+	}
+	date, err := time.Parse(time.RFC822, dateStr)
+	if err != nil {
+		t.Fatalf("createConcert(date) err %v; want nil", err)
+	}
+
+	concert := models.Concert{
+		Title:                 "The Red Chord",
+		Subtitle:              "with Animosity and Lethargy",
+		Date:                  date,
+		TicketPrice:           3250,
+		Venue:                 "The Mosh Pit",
+		VenueAddress:          "123 Example Lane",
+		City:                  "Golang city",
+		State:                 "On",
+		Zip:                   "17916",
+		AdditionalInformation: "For tickets, call (555) 555-5555",
+	}
+	if overrides != nil {
+		overrideConcert(&concert, *overrides)
+	}
+
+	if insert {
+		err = ts.cs.Create(&concert)
+		if err != nil {
+			t.Fatalf("Create(concert) err = %v, want nil", err)
+		}
+	}
+
+	return &concert
+}
+
+func overrideConcert(concert *models.Concert, c models.Concert) {
+	if c.Title != "" {
+		concert.Title = c.Title
+	}
+	if c.Subtitle != "" {
+		concert.Subtitle = c.Subtitle
+	}
+	if c.TicketPrice != 0 {
+		concert.TicketPrice = c.TicketPrice
+	}
+	if c.Venue != "" {
+		concert.Title = c.Venue
+	}
+	if c.VenueAddress != "" {
+		concert.Title = c.VenueAddress
+	}
+	if c.City != "" {
+		concert.Title = c.City
+	}
+	if c.State != "" {
+		concert.Title = c.State
+	}
+	if c.Zip != "" {
+		concert.Title = c.Zip
+	}
+	if c.AdditionalInformation != "" {
+		concert.Title = c.AdditionalInformation
+	}
 }
