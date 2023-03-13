@@ -5,9 +5,9 @@ import {
   MapPinIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/24/solid';
+import format from 'date-fns/format';
 import type { IConcert } from '@/api/concerts';
 import { formatCurrency } from '@/utils';
-import { format } from 'date-fns';
 
 interface Props {
   concert: IConcert;
