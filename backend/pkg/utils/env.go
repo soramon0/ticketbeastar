@@ -18,16 +18,14 @@ func GetDatabaseURL() string {
 	if err != nil {
 		url = "postgres://postgres:example@127.0.0.1:5432/dev_db?sslmode=disable"
 	}
-
 	return url
 }
 
 func GetTestDatabaseURL() string {
-	url := os.Getenv("TEST_DB_URL")
-	if url == "" {
+	url, err := checkEnv("DB_URL")
+	if err != nil {
 		url = "postgres://postgres:example@127.0.0.1:5433/test_db?sslmode=disable"
 	}
-
 	return url
 }
 
@@ -45,13 +43,6 @@ func GetServerReadTimeout() string {
 	if v == "" {
 		return "60"
 	}
-
-	return v
-}
-
-func GetDatabaseName() string {
-	v, err := checkEnv("DB_NAME")
-	Must(err)
 
 	return v
 }
