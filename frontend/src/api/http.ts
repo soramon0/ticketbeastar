@@ -13,17 +13,24 @@ export async function http<T>(
     ...options
   }: RequestInit & { fallbackMessage?: string } = {}
 ) {
-  const response = await fetch(url, {
-    method,
-    body,
-    ...options,
-  });
+  try {
+    const response = await fetch(url, {
+      method,
+      body,
+      ...options,
+    });
 
-  const { data, error } = (await response.json()) as ApiResponse<T>;
+    const result = (await response.json()) as ApiResponse<NonNullable<T>>;
 
-  if (!response.ok || !data) {
-    throw new Error(error || fallbackMessage || 'Failed to perform action.');
+    if (!response.ok || !result.data) {
+      throw new Error(
+        result.error || fallbackMessage || 'Failed to perform action.'
+      );
+    }
+
+    return result;
+  } catch (error) {
+    console.error(error); // Log the error to an error reporting service
+    throw new Error(fallbackMessage || 'Failed to perform action.');
   }
-
-  return data;
 }

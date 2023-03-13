@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { ApiResponse } from './http';
+import { http } from './http';
+import { getAPIURL } from '@/utils/env';
 
 export const concertSchema = z.object({
   id: z.number(),
@@ -32,12 +33,9 @@ export function parseConcerts(data: unknown): IConcert[] {
 }
 
 export async function getConcerts() {
-  const response = await fetch(`http://localhost:5000/api/v1/concerts`);
-  const result = (await response.json()) as ApiResponse<unknown[]>;
+  const { data } = await http<unknown[]>(`${getAPIURL()}/concerts`, {
+    fallbackMessage: 'Could not retrieve concerts',
+  });
 
-  if (!response.ok || !result.data) {
-    throw new Error(result.error || 'Could not retrieve concerts');
-  }
-
-  return parseConcerts(result.data);
+  return parseConcerts(data);
 }

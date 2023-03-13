@@ -15,7 +15,7 @@ interface Props {
 
 function Concert({ concert }: Props) {
   return (
-    <article className="md :w-6/12 w-full space-y-8 rounded-xl bg-white p-10  shadow-md">
+    <article className="w-full space-y-8 rounded-xl bg-white p-10 shadow-md md:w-6/12">
       <div className="space-y-2">
         <h3 className="text-3xl font-bold capitalize">{concert.title}</h3>
         <p className="font-semibold">{concert.subtitle}</p>
