@@ -30,7 +30,7 @@ func (c *Concerts) GetConcerts(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	return ctx.JSON(models.APIResponse{Data: concerts, Count: len(*concerts)})
+	return ctx.JSON(models.NewAPIResponse(concerts, len(*concerts), nil))
 }
 
 func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
@@ -49,5 +49,5 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	return ctx.JSON(models.APIResponse{Data: concert})
+	return ctx.JSON(models.NewAPIResponse(concert, 0, nil))
 }

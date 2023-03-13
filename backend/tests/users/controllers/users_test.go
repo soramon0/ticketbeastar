@@ -40,7 +40,7 @@ func testUsersListing(t *testing.T, ts *testServer) {
 	body, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
-	var apiResponse models.APIResponse
+	var apiResponse models.APIResponse[[]models.User]
 	if err := json.Unmarshal(body, &apiResponse); err != nil {
 		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
 	}

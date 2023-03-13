@@ -55,7 +55,7 @@ func (ts *testServer) teardown(t *testing.T) {
 	}
 }
 
-func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCode int, wantCount int, wantError string) *models.APIResponse {
+func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCode int, wantCount int, wantError string) *models.APIResponse[models.Concert] {
 	req := httptest.NewRequest("GET", endpoint, nil)
 	resp, err := ts.app.Test(req)
 	if err != nil {
@@ -66,7 +66,7 @@ func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCo
 	}
 	body, _ := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
-	var apiResponse models.APIResponse
+	var apiResponse models.APIResponse[models.Concert]
 	if err := json.Unmarshal(body, &apiResponse); err != nil {
 		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
 	}

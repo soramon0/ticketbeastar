@@ -41,7 +41,8 @@ func testConcertListing(t *testing.T, ts *testServer) {
 		t.Fatalf("Create(concert) err = %v, want nil", err)
 	}
 
-	endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
-	res := ts.hitGetEndpoint(t, endpoint, fiber.StatusOK, 0, "")
-	fmt.Println(res)
+	r := ts.hitGetEndpoint(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id), fiber.StatusOK, 0, "")
+	if r.Data.Id != concert.Id {
+		t.Fatalf("concert.id mismatch want %d, got %d", concert.Id, r.Data.Id)
+	}
 }
