@@ -14,6 +14,7 @@ func registerConcertRoutes(a *fiber.App, s *models.Services, l *log.Logger) *fib
 	concertsC := controllers.NewConcerts(s.Concert, l)
 
 	router.Get("/", concertsC.GetConcerts)
+	router.Get("/:id", concertsC.GetConcertById)
 
 	return &router
 }
