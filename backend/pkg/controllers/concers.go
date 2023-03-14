@@ -24,7 +24,7 @@ func NewConcerts(cs models.ConcertService, l *log.Logger) *Concerts {
 }
 
 func (c *Concerts) GetConcerts(ctx *fiber.Ctx) error {
-	concerts, err := c.service.Find()
+	concerts, err := c.service.FindPublished()
 	if err != nil {
 		c.log.Println("GetConcerts", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
@@ -39,7 +39,7 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
 	}
 
-	concert, err := c.service.FindById(id)
+	concert, err := c.service.FindPublishedById(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}

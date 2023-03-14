@@ -30,7 +30,9 @@ type Concert struct {
 type ConcertService interface {
 	// Methods for querying users
 	Find() (*[]Concert, error)
+	FindPublished() (*[]Concert, error)
 	FindById(id uint64) (*Concert, error)
+	FindPublishedById(id uint64) (*Concert, error)
 
 	// Methods for altering concerts
 	Create(concert *Concert) error
@@ -47,19 +49,39 @@ func NewConcertService(db *bun.DB) ConcertService {
 }
 
 func (cs *concertService) Find() (*[]Concert, error) {
+	concerts := []Concert{}
+	query := buildSelectQuery(cs.db, &concerts, false)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	return &concerts, query.Scan(ctx)
+}
+
+func (cs *concertService) FindPublished() (*[]Concert, error) {
 	concerts := []Concert{}
-	err := cs.db.NewSelect().Model(&concerts).Where("published_at IS NOT NULL").Scan(ctx)
-	return &concerts, err
+	query := buildSelectQuery(cs.db, &concerts, true)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return &concerts, query.Scan(ctx)
 }
 
 func (cs *concertService) FindById(id uint64) (*Concert, error) {
+	var concert Concert
+	query := buildSelectQuery(cs.db, &concert, false)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	return &concert, query.Scan(ctx)
+}
+
+func (cs *concertService) FindPublishedById(id uint64) (*Concert, error) {
 	var concert Concert
-	err := cs.db.NewSelect().Model(&concert).Where("id = ?", id).Where("published_at IS NOT NULL").Scan(ctx)
-	return &concert, err
+	query := buildSelectQuery(cs.db, &concert, true)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	return &concert, query.Scan(ctx)
 }
 
 func (cs *concertService) Create(concert *Concert) error {
@@ -67,4 +89,12 @@ func (cs *concertService) Create(concert *Concert) error {
 	defer cancel()
 	_, err := cs.db.NewInsert().Model(concert).Exec(ctx)
 	return err
+}
+
+func buildSelectQuery(db *bun.DB, model any, published bool) *bun.SelectQuery {
+	query := db.NewSelect().Model(model)
+	if published {
+		query.Where("published_at IS NOT NULL")
+	}
+	return query
 }
