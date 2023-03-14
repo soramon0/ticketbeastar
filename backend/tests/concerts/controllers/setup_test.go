@@ -44,7 +44,6 @@ func newTestServer() *testServer {
 func (ts *testServer) setup(t *testing.T) {
 	_, err := ts.db.NewCreateTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
-		defer ts.teardown(t)
 		t.Fatalf("NewCreateTable(Concert) err %v; want nil", err)
 	}
 }
