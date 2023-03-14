@@ -2,6 +2,7 @@ package controllers_test
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io"
 	"log"
@@ -43,13 +44,12 @@ func newTestServer() *testServer {
 func (ts *testServer) setup(t *testing.T) {
 	_, err := ts.db.NewCreateTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
+		defer ts.teardown(t)
 		t.Fatalf("NewCreateTable(Concert) err %v; want nil", err)
 	}
 }
 
 func (ts *testServer) teardown(t *testing.T) {
-	defer database.CloseConnection(ts.db)
-
 	_, err := ts.db.NewDropTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop concerts table err %v; want nil", err)
@@ -72,14 +72,14 @@ func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCo
 		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
 	}
 	if apiResponse.Count != wantCount {
-		log.Fatalf("apiResponse.Count mismatch. want %d; got %d", wantCount, apiResponse.Count)
+		t.Fatalf("apiResponse.Count mismatch. want %d; got %d", wantCount, apiResponse.Count)
 	}
 	if wantError == "" && apiResponse.Error != nil {
-		log.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)
+		t.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)
 	}
 	if apiResponse.Error != nil {
 		if apiResponse.Error.Message != wantError {
-			log.Fatalf("apiResponse.Error got %q; want %q", apiResponse.Error.Message, wantError)
+			t.Fatalf("apiResponse.Error got %q; want %q", apiResponse.Error.Message, wantError)
 		}
 	}
 	return &apiResponse
@@ -98,6 +98,7 @@ func (ts *testServer) createConcert(t *testing.T, overrides *models.Concert, dat
 		Title:                 "The Red Chord",
 		Subtitle:              "with Animosity and Lethargy",
 		Date:                  date,
+		PublishedAt:           sql.NullTime{Time: time.Now(), Valid: true},
 		TicketPrice:           3250,
 		Venue:                 "The Mosh Pit",
 		VenueAddress:          "123 Example Lane",
@@ -129,6 +130,9 @@ func overrideConcert(concert *models.Concert, c models.Concert) {
 	}
 	if c.TicketPrice != 0 {
 		concert.TicketPrice = c.TicketPrice
+	}
+	if !c.PublishedAt.Valid {
+		concert.PublishedAt = c.PublishedAt
 	}
 	if c.Venue != "" {
 		concert.Title = c.Venue

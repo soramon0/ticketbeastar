@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -10,19 +11,20 @@ import (
 type Concert struct {
 	bun.BaseModel `bun:"table:concerts,alias:c"`
 
-	Id                    uint64    `bun:"id,pk,autoincrement" json:"id"`
-	Title                 string    `bun:"title,notnull" json:"title"`
-	Subtitle              string    `bun:"subtitle,notnull" json:"subtitle"`
-	Date                  time.Time `bun:"date,notnull" json:"date"`
-	TicketPrice           uint64    `bun:"ticket_price,notnull" json:"ticket_price"`
-	Venue                 string    `bun:"venue,notnull" json:"venue"`
-	VenueAddress          string    `bun:"venue_address,notnull" json:"venue_address"`
-	City                  string    `bun:"city,notnull" json:"city"`
-	State                 string    `bun:"state,notnull" json:"state"`
-	Zip                   string    `bun:"zip,notnull" json:"zip"`
-	AdditionalInformation string    `bun:"additional_information,type:text,notnull" json:"additional_information"`
-	CreatedAt             time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
-	UpdatedAt             time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
+	Id                    uint64       `bun:"id,pk,autoincrement" json:"id"`
+	Title                 string       `bun:"title,notnull" json:"title"`
+	Subtitle              string       `bun:"subtitle,notnull" json:"subtitle"`
+	Date                  time.Time    `bun:"date,notnull" json:"date"`
+	TicketPrice           uint64       `bun:"ticket_price,notnull" json:"ticket_price"`
+	Venue                 string       `bun:"venue,notnull" json:"venue"`
+	VenueAddress          string       `bun:"venue_address,notnull" json:"venue_address"`
+	City                  string       `bun:"city,notnull" json:"city"`
+	State                 string       `bun:"state,notnull" json:"state"`
+	Zip                   string       `bun:"zip,notnull" json:"zip"`
+	AdditionalInformation string       `bun:"additional_information,type:text,notnull" json:"additional_information"`
+	PublishedAt           sql.NullTime `bun:"published_at,nullzero" json:"published_at"`
+	CreatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
+	UpdatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 }
 
 type ConcertService interface {
@@ -48,7 +50,7 @@ func (cs *concertService) Find() (*[]Concert, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	concerts := []Concert{}
-	err := cs.db.NewSelect().Model(&concerts).Scan(ctx)
+	err := cs.db.NewSelect().Model(&concerts).Where("published_at IS NOT NULL").Scan(ctx)
 	return &concerts, err
 }
 
@@ -56,7 +58,7 @@ func (cs *concertService) FindById(id uint64) (*Concert, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var concert Concert
-	err := cs.db.NewSelect().Model(&concert).Where("id = ?", id).Scan(ctx)
+	err := cs.db.NewSelect().Model(&concert).Where("id = ?", id).Where("published_at IS NOT NULL").Scan(ctx)
 	return &concert, err
 }
 

@@ -3,7 +3,19 @@
     - title: "The Red Chord"
       subtitle: "with Animosity and Lethargy"
       date: "{{ now }}"
+      published_at: "{{ now }}"
       ticket_price: 3250
+      venue: "The Mosh Pit"
+      venue_address: "123 Example Lane"
+      city: "Golang city"
+      state: "On"
+      zip: "17916"
+      additional_information: "For tickets, call (555) 555-5555"
+    - title: "The Burning Man"
+      subtitle: "here and now"
+      date: "{{ now }}"
+      published_at: null
+      ticket_price: 2000
       venue: "The Mosh Pit"
       venue_address: "123 Example Lane"
       city: "Golang city"
