@@ -18,34 +18,45 @@ func TestConcertsController(t *testing.T) {
 	tests := map[string]func(t *testing.T, ts *testServer){
 		"can view single published concert": func(t *testing.T, ts *testServer) {
 			concert := ts.createConcert(t, nil, "", true)
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
-			resp := unmarshalConcert(t, ts.visit(t, endpoint, fiber.StatusOK))
-			assertResponse(t, resp, 0, "")
+			resp := ts.visit(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id))
+			api := unmarshalConcert(t, resp.Body)
 
-			if resp.Data == nil {
+			assertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
+			assertResponseCount(t, api.Count, 0)
+			assertResponseError(t, api.Error, nil)
+
+			if api.Data == nil {
 				t.Fatal("api response data should not be empty")
 			}
-			if resp.Data.Id != concert.Id {
-				t.Fatalf("concert id mismatch want %d, got %d", concert.Id, resp.Data.Id)
+			if api.Data.Id != concert.Id {
+				t.Fatalf("concert id mismatch want %d, got %d", concert.Id, api.Data.Id)
 			}
 		},
 		"cannot view single unpublished concert": func(t *testing.T, ts *testServer) {
 			concert := ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
-			resp := unmarshalConcert(t, ts.visit(t, endpoint, fiber.StatusNotFound))
-			assertResponse(t, resp, 0, "Concert not found")
+			resp := ts.visit(t, endpoint)
+			api := unmarshalConcert(t, resp.Body)
 
-			if resp.Data != nil {
-				t.Fatalf("response data should be nil; got %v", resp.Data)
+			assertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
+			assertResponseCount(t, api.Count, 0)
+			assertResponseError(t, api.Error, &models.APIError{Message: "Concert not found"})
+
+			if api.Data != nil {
+				t.Fatalf("response data should be nil; got %v", api.Data)
 			}
 		},
 		"can view list of published concerts": func(t *testing.T, ts *testServer) {
 			ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
 			concert2 := ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{Time: time.Now(), Valid: true}}, "", true)
-			resp := unmarshalConcerts(t, ts.visit(t, "/api/v1/concerts", fiber.StatusOK))
-			assertResponse(t, resp, 1, "")
+			resp := ts.visit(t, "/api/v1/concerts")
+			api := unmarshalConcerts(t, resp.Body)
 
-			data := *resp.Data
+			assertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
+			assertResponseCount(t, api.Count, 1)
+			assertResponseError(t, api.Error, nil)
+
+			data := *api.Data
 			if len(data) != 1 {
 				t.Fatalf("response data should have one concert; got %d", len(data))
 			}
