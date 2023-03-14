@@ -56,33 +56,25 @@ func (ts *testServer) teardown(t *testing.T) {
 	}
 }
 
-func (ts *testServer) hitGetEndpoint(t *testing.T, endpoint string, wantStatusCode int, wantCount int, wantError string) *models.APIResponse[models.Concert] {
+func (ts *testServer) visit(t *testing.T, endpoint string, wantStatusCode int) []byte {
 	req := httptest.NewRequest("GET", endpoint, nil)
 	resp, err := ts.app.Test(req)
+
 	if err != nil {
-		t.Fatalf("GET %s err %v", endpoint, err)
+		t.Fatalf("could not reach %s; err %v", endpoint, err)
 	}
+
 	if resp.StatusCode != wantStatusCode {
-		t.Fatalf("statusCode = %d; want %d", resp.StatusCode, wantStatusCode)
+		t.Fatalf("response status code should be %d; got %d", wantStatusCode, resp.StatusCode)
 	}
-	body, _ := io.ReadAll(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
 	defer resp.Body.Close()
-	var apiResponse models.APIResponse[models.Concert]
-	if err := json.Unmarshal(body, &apiResponse); err != nil {
-		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
-	}
-	if apiResponse.Count != wantCount {
-		t.Fatalf("apiResponse.Count mismatch. want %d; got %d", wantCount, apiResponse.Count)
-	}
-	if wantError == "" && apiResponse.Error != nil {
-		t.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)
-	}
-	if apiResponse.Error != nil {
-		if apiResponse.Error.Message != wantError {
-			t.Fatalf("apiResponse.Error got %q; want %q", apiResponse.Error.Message, wantError)
-		}
-	}
-	return &apiResponse
+
+	return body
 }
 
 func (ts *testServer) createConcert(t *testing.T, overrides *models.Concert, dateStr string, insert bool) *models.Concert {
@@ -151,5 +143,41 @@ func overrideConcert(concert *models.Concert, c models.Concert) {
 	}
 	if c.AdditionalInformation != "" {
 		concert.Title = c.AdditionalInformation
+	}
+}
+
+func unmarshalConcert(t *testing.T, body []byte) models.APIResponse[*models.Concert] {
+	var resp models.APIResponse[*models.Concert]
+	if err := json.Unmarshal(body, &resp); err != nil {
+		t.Fatalf("could not unmarshal concert response body; err %v", err)
+	}
+	return resp
+}
+
+func unmarshalConcerts(t *testing.T, body []byte) models.APIResponse[*[]models.Concert] {
+	var resp models.APIResponse[*[]models.Concert]
+	if err := json.Unmarshal(body, &resp); err != nil {
+		t.Fatalf("could not unmarshal concerts response body; err %v", err)
+	}
+	return resp
+}
+
+type responseData interface {
+	models.Concert | *models.Concert | []models.Concert | *[]models.Concert
+}
+
+func assertResponse[T responseData](t *testing.T, resp models.APIResponse[T], wantCount int, wantError string) {
+	if resp.Count != wantCount {
+		t.Fatalf("api response count should be %d; got %d", wantCount, resp.Count)
+	}
+
+	if wantError == "" && resp.Error != nil {
+		t.Fatalf("api response error should be nil; got %v", resp.Error)
+	}
+
+	if resp.Error != nil {
+		if resp.Error.Message != wantError {
+			t.Fatalf("api response should %q; got %q", wantError, resp.Error.Message)
+		}
 	}
 }
