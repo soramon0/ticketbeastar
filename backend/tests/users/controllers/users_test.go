@@ -43,19 +43,19 @@ func TestUsersController(t *testing.T) {
 	}
 }
 
-func unmarshalUser(t *testing.T, body io.ReadCloser) models.APIResponse[*models.User] {
-	content, err := io.ReadAll(body)
-	if err != nil {
-		t.Fatalf("could not read response body; err %v", err)
-	}
-	defer body.Close()
+// func unmarshalUser(t *testing.T, body io.ReadCloser) models.APIResponse[*models.User] {
+// 	content, err := io.ReadAll(body)
+// 	if err != nil {
+// 		t.Fatalf("could not read response body; err %v", err)
+// 	}
+// 	defer body.Close()
 
-	var resp models.APIResponse[*models.User]
-	if err := json.Unmarshal(content, &resp); err != nil {
-		t.Fatalf("could not unmarshal concert response body; err %v", err)
-	}
-	return resp
-}
+// 	var resp models.APIResponse[*models.User]
+// 	if err := json.Unmarshal(content, &resp); err != nil {
+// 		t.Fatalf("could not unmarshal concert response body; err %v", err)
+// 	}
+// 	return resp
+// }
 
 func unmarshalUsers(t *testing.T, body io.ReadCloser) models.APIResponse[*[]models.User] {
 	content, err := io.ReadAll(body)
