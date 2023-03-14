@@ -3,51 +3,70 @@ package controllers_test
 import (
 	"encoding/json"
 	"io"
-	"log"
-	"net/http/httptest"
 	"testing"
+	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
+	"ticketbeastar/tests"
+	"ticketbeastar/tests/users"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func TestUsersController(t *testing.T) {
-	ts := newTestServer()
+	ts := tests.NewTestServer()
+	defer database.CloseConnection(ts.Db)
 
-	t.Run("List", func(t *testing.T) {
-		ts.setup(t)
-		defer ts.teardown(t)
-		testUsersListing(t, ts)
-	})
+	tests := map[string]func(t *testing.T){
+		"can list users": func(t *testing.T) {
+			totalUsers := 5
+			users := users.CreateUsers(t, ts.Db, uint(totalUsers))
+			resp := ts.Visit(t, "/api/v1/users")
+			api := unmarshalUsers(t, resp.Body)
 
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
+			ts.AssertResponseCount(t, api.Count, totalUsers)
+			ts.AssertResponseError(t, api.Error, nil)
+
+			data := *api.Data
+			if len(data) != len(*users) {
+				t.Fatalf("response data should have %d users; got %d", totalUsers, len(data))
+			}
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			users.SetupTable(t, ts.Db)
+			defer users.TeardownTable(t, ts.Db)
+			test(t)
+		})
+	}
 }
 
-func testUsersListing(t *testing.T, ts *testServer) {
-	users, err := createUsers(ts.db, 5)
+func unmarshalUser(t *testing.T, body io.ReadCloser) models.APIResponse[*models.User] {
+	content, err := io.ReadAll(body)
 	if err != nil {
-		t.Fatalf("createUsers() err %v; want nil", err)
+		t.Fatalf("could not read response body; err %v", err)
 	}
+	defer body.Close()
 
-	req := httptest.NewRequest("GET", "/api/v1/users", nil)
-	resp, err := ts.app.Test(req)
+	var resp models.APIResponse[*models.User]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concert response body; err %v", err)
+	}
+	return resp
+}
+
+func unmarshalUsers(t *testing.T, body io.ReadCloser) models.APIResponse[*[]models.User] {
+	content, err := io.ReadAll(body)
 	if err != nil {
-		t.Fatal("GET /api/v1/users", err)
+		t.Fatalf("could not read response body; err %v", err)
 	}
+	defer body.Close()
 
-	if resp.StatusCode != fiber.StatusOK {
-		t.Fatalf("statusCode = %d; want %d", resp.StatusCode, fiber.StatusOK)
+	var resp models.APIResponse[*[]models.User]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concerts response body; err %v", err)
 	}
-	body, _ := io.ReadAll(resp.Body)
-	defer resp.Body.Close()
-
-	var apiResponse models.APIResponse[[]models.User]
-	if err := json.Unmarshal(body, &apiResponse); err != nil {
-		t.Fatalf("apiResponse unmarshal() err %v; want nil", err)
-	}
-	if apiResponse.Count != len(*users) {
-		log.Fatalf("apiResponse.Count incorrect. want %d; got %d", apiResponse.Count, len(*users))
-	}
-	if apiResponse.Error != nil {
-		log.Fatalf("apiResponse.Error got %v; want nil", apiResponse.Error)
-	}
+	return resp
 }
