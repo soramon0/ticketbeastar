@@ -2,28 +2,32 @@ package controllers_test
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
+	"ticketbeastar/tests"
+	"ticketbeastar/tests/concerts"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 func TestConcertsController(t *testing.T) {
-	ts := newTestServer()
-	defer database.CloseConnection(ts.db)
+	ts := tests.NewTestServer()
+	defer database.CloseConnection(ts.Db)
 
-	tests := map[string]func(t *testing.T, ts *testServer){
-		"can view single published concert": func(t *testing.T, ts *testServer) {
-			concert := ts.createConcert(t, nil, "", true)
-			resp := ts.visit(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id))
+	tests := map[string]func(t *testing.T){
+		"can view single published concert": func(t *testing.T) {
+			concert := concerts.CreateConcert(t, ts.Db, nil, "", true)
+			resp := ts.Visit(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id))
 			api := unmarshalConcert(t, resp.Body)
 
-			assertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
-			assertResponseCount(t, api.Count, 0)
-			assertResponseError(t, api.Error, nil)
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
+			ts.AssertResponseCount(t, api.Count, 0)
+			ts.AssertResponseError(t, api.Error, nil)
 
 			if api.Data == nil {
 				t.Fatal("api response data should not be empty")
@@ -32,29 +36,29 @@ func TestConcertsController(t *testing.T) {
 				t.Fatalf("concert id mismatch want %d, got %d", concert.Id, api.Data.Id)
 			}
 		},
-		"cannot view single unpublished concert": func(t *testing.T, ts *testServer) {
-			concert := ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
+		"cannot view single unpublished concert": func(t *testing.T) {
+			concert := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
-			resp := ts.visit(t, endpoint)
+			resp := ts.Visit(t, endpoint)
 			api := unmarshalConcert(t, resp.Body)
 
-			assertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
-			assertResponseCount(t, api.Count, 0)
-			assertResponseError(t, api.Error, &models.APIError{Message: "Concert not found"})
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
+			ts.AssertResponseCount(t, api.Count, 0)
+			ts.AssertResponseError(t, api.Error, &models.APIError{Message: "Concert not found"})
 
 			if api.Data != nil {
 				t.Fatalf("response data should be nil; got %v", api.Data)
 			}
 		},
-		"can view list of published concerts": func(t *testing.T, ts *testServer) {
-			ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
-			concert2 := ts.createConcert(t, &models.Concert{PublishedAt: sql.NullTime{Time: time.Now(), Valid: true}}, "", true)
-			resp := ts.visit(t, "/api/v1/concerts")
+		"can view list of published concerts": func(t *testing.T) {
+			concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
+			concert2 := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{Time: time.Now(), Valid: true}}, "", true)
+			resp := ts.Visit(t, "/api/v1/concerts")
 			api := unmarshalConcerts(t, resp.Body)
 
-			assertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
-			assertResponseCount(t, api.Count, 1)
-			assertResponseError(t, api.Error, nil)
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
+			ts.AssertResponseCount(t, api.Count, 1)
+			ts.AssertResponseError(t, api.Error, nil)
 
 			data := *api.Data
 			if len(data) != 1 {
@@ -68,9 +72,37 @@ func TestConcertsController(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			ts.setup(t)
-			defer ts.teardown(t)
-			test(t, ts)
+			concerts.SetupTable(t, ts.Db)
+			defer concerts.TeardownTable(t, ts.Db)
+			test(t)
 		})
 	}
+}
+
+func unmarshalConcert(t *testing.T, body io.ReadCloser) models.APIResponse[*models.Concert] {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIResponse[*models.Concert]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concert response body; err %v", err)
+	}
+	return resp
+}
+
+func unmarshalConcerts(t *testing.T, body io.ReadCloser) models.APIResponse[*[]models.Concert] {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIResponse[*[]models.Concert]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concerts response body; err %v", err)
+	}
+	return resp
 }
