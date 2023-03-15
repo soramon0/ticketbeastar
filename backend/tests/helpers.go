@@ -83,11 +83,8 @@ func TeardownConcertTable(t *testing.T, db *bun.DB) {
 	}
 }
 
-func CreateConcert(t *testing.T, db *bun.DB, overrides *models.Concert, dateStr string, insert bool) *models.Concert {
-	if dateStr == "" {
-		dateStr = "02 Dec 06 08:00 MST"
-	}
-	date, err := time.Parse(time.RFC822, dateStr)
+func CreateConcert(t *testing.T, db *bun.DB, overrides *models.Concert, insert bool) *models.Concert {
+	date, err := time.Parse(time.RFC822, "02 Dec 06 08:00 MST")
 	if err != nil {
 		t.Fatalf("createConcert(date) err %v; want nil", err)
 	}
@@ -133,6 +130,9 @@ func overrideConcert(concert *models.Concert, c models.Concert) {
 	}
 	if c.PublishedAt.Time.IsZero() {
 		concert.PublishedAt = c.PublishedAt
+	}
+	if c.Date.IsZero() {
+		concert.Date = c.Date
 	}
 	if c.Venue != "" {
 		concert.Title = c.Venue

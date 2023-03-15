@@ -16,9 +16,9 @@ func TestConcertModels(t *testing.T) {
 
 	testCases := map[string]func(t *testing.T, cs models.ConcertService){
 		"with a published_at date are published": func(t *testing.T, cs models.ConcertService) {
-			publishedA := tests.CreateConcert(t, db, nil, "", true)
-			publishedB := tests.CreateConcert(t, db, nil, "", true)
-			unpublished := tests.CreateConcert(t, db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
+			publishedA := tests.CreateConcert(t, db, nil, true)
+			publishedB := tests.CreateConcert(t, db, nil, true)
+			unpublished := tests.CreateConcert(t, db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
 
 			concerts, err := cs.FindPublished()
 			if err != nil {
