@@ -1,4 +1,4 @@
-package controllers_test
+package features_test
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
-	"ticketbeastar/tests/concerts"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -19,9 +18,9 @@ func TestConcertsController(t *testing.T) {
 	ts := tests.NewTestServer()
 	defer database.CloseConnection(ts.Db)
 
-	tests := map[string]func(t *testing.T){
+	testsCases := map[string]func(t *testing.T){
 		"can view single published concert": func(t *testing.T) {
-			concert := concerts.CreateConcert(t, ts.Db, nil, "", true)
+			concert := tests.CreateConcert(t, ts.Db, nil, "", true)
 			resp := ts.Visit(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id))
 			api := unmarshalConcert(t, resp.Body)
 
@@ -37,7 +36,7 @@ func TestConcertsController(t *testing.T) {
 			}
 		},
 		"cannot view single unpublished concert": func(t *testing.T) {
-			concert := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
+			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
 			resp := ts.Visit(t, endpoint)
 			api := unmarshalConcert(t, resp.Body)
@@ -51,8 +50,8 @@ func TestConcertsController(t *testing.T) {
 			}
 		},
 		"can view list of published concerts": func(t *testing.T) {
-			concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
-			concert2 := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{Time: time.Now()}}, "", true)
+			tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
+			concert2 := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{Time: time.Now()}}, "", true)
 			resp := ts.Visit(t, "/api/v1/concerts")
 			api := unmarshalConcerts(t, resp.Body)
 
@@ -70,11 +69,11 @@ func TestConcertsController(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range testsCases {
 		t.Run(name, func(t *testing.T) {
-			concerts.SetupTable(t, ts.Db)
-			defer concerts.TeardownTable(t, ts.Db)
-			test(t)
+			tests.SetupConcertTable(t, ts.Db)
+			defer tests.TeardownConcertTable(t, ts.Db)
+			tc(t)
 		})
 	}
 }

@@ -1,4 +1,4 @@
-package controllers_test
+package features_test
 
 import (
 	"encoding/json"
@@ -7,7 +7,6 @@ import (
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
-	"ticketbeastar/tests/users"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -16,10 +15,10 @@ func TestUsersController(t *testing.T) {
 	ts := tests.NewTestServer()
 	defer database.CloseConnection(ts.Db)
 
-	tests := map[string]func(t *testing.T){
+	testCases := map[string]func(t *testing.T){
 		"can list users": func(t *testing.T) {
 			totalUsers := 5
-			users := users.CreateUsers(t, ts.Db, uint(totalUsers))
+			users := tests.CreateUsers(t, ts.Db, uint(totalUsers))
 			resp := ts.Visit(t, "/api/v1/users")
 			api := unmarshalUsers(t, resp.Body)
 
@@ -34,11 +33,11 @@ func TestUsersController(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			users.SetupTable(t, ts.Db)
-			defer users.TeardownTable(t, ts.Db)
-			test(t)
+			tests.SetupUserTable(t, ts.Db)
+			defer tests.TeardownUserTable(t, ts.Db)
+			tc(t)
 		})
 	}
 }

@@ -1,11 +1,11 @@
-package models_test
+package unit_test
 
 import (
 	"testing"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/pkg/utils"
-	"ticketbeastar/tests/concerts"
+	"ticketbeastar/tests"
 
 	"github.com/uptrace/bun"
 )
@@ -14,11 +14,11 @@ func TestConcertModels(t *testing.T) {
 	db := database.OpenConnection(utils.GetTestDatabaseURL(), utils.InitLogger())
 	defer database.CloseConnection(db)
 
-	tests := map[string]func(t *testing.T, cs models.ConcertService){
+	testCases := map[string]func(t *testing.T, cs models.ConcertService){
 		"with a published_at date are published": func(t *testing.T, cs models.ConcertService) {
-			publishedA := concerts.CreateConcert(t, db, nil, "", true)
-			publishedB := concerts.CreateConcert(t, db, nil, "", true)
-			unpublished := concerts.CreateConcert(t, db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
+			publishedA := tests.CreateConcert(t, db, nil, "", true)
+			publishedB := tests.CreateConcert(t, db, nil, "", true)
+			unpublished := tests.CreateConcert(t, db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
 
 			concerts, err := cs.FindPublished()
 			if err != nil {
@@ -41,11 +41,11 @@ func TestConcertModels(t *testing.T) {
 		},
 	}
 
-	for name, test := range tests {
+	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			concerts.SetupTable(t, db)
-			defer concerts.TeardownTable(t, db)
-			test(t, models.NewConcertService(db))
+			tests.SetupConcertTable(t, db)
+			defer tests.TeardownConcertTable(t, db)
+			tc(t, models.NewConcertService(db))
 		})
 	}
 }
