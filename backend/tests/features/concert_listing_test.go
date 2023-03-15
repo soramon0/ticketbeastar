@@ -14,7 +14,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func TestConcertsController(t *testing.T) {
+func TestConcertsListing(t *testing.T) {
 	ts := tests.NewTestServer()
 	defer database.CloseConnection(ts.Db)
 
