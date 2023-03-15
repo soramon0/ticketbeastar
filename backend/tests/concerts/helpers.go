@@ -2,7 +2,6 @@ package concerts
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"ticketbeastar/pkg/models"
 	"time"
@@ -37,7 +36,7 @@ func CreateConcert(t *testing.T, db *bun.DB, overrides *models.Concert, dateStr 
 		Title:                 "The Red Chord",
 		Subtitle:              "with Animosity and Lethargy",
 		Date:                  date,
-		PublishedAt:           sql.NullTime{Time: time.Now(), Valid: true},
+		PublishedAt:           bun.NullTime{Time: time.Now()},
 		TicketPrice:           3250,
 		Venue:                 "The Mosh Pit",
 		VenueAddress:          "123 Example Lane",
@@ -72,7 +71,7 @@ func overrideConcert(concert *models.Concert, c models.Concert) {
 	if c.TicketPrice != 0 {
 		concert.TicketPrice = c.TicketPrice
 	}
-	if !c.PublishedAt.Valid {
+	if c.PublishedAt.Time.IsZero() {
 		concert.PublishedAt = c.PublishedAt
 	}
 	if c.Venue != "" {

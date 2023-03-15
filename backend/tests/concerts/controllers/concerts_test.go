@@ -1,7 +1,6 @@
 package controllers_test
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/uptrace/bun"
 )
 
 func TestConcertsController(t *testing.T) {
@@ -37,7 +37,7 @@ func TestConcertsController(t *testing.T) {
 			}
 		},
 		"cannot view single unpublished concert": func(t *testing.T) {
-			concert := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
+			concert := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
 			resp := ts.Visit(t, endpoint)
 			api := unmarshalConcert(t, resp.Body)
@@ -51,8 +51,8 @@ func TestConcertsController(t *testing.T) {
 			}
 		},
 		"can view list of published concerts": func(t *testing.T) {
-			concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
-			concert2 := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: sql.NullTime{Time: time.Now(), Valid: true}}, "", true)
+			concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
+			concert2 := concerts.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{Time: time.Now()}}, "", true)
 			resp := ts.Visit(t, "/api/v1/concerts")
 			api := unmarshalConcerts(t, resp.Body)
 

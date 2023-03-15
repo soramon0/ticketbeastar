@@ -1,12 +1,13 @@
 package models_test
 
 import (
-	"database/sql"
 	"testing"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/pkg/utils"
 	"ticketbeastar/tests/concerts"
+
+	"github.com/uptrace/bun"
 )
 
 func TestConcertModels(t *testing.T) {
@@ -17,7 +18,7 @@ func TestConcertModels(t *testing.T) {
 		"with a published_at date are published": func(t *testing.T, cs models.ConcertService) {
 			publishedA := concerts.CreateConcert(t, db, nil, "", true)
 			publishedB := concerts.CreateConcert(t, db, nil, "", true)
-			unpublished := concerts.CreateConcert(t, db, &models.Concert{PublishedAt: sql.NullTime{}}, "", true)
+			unpublished := concerts.CreateConcert(t, db, &models.Concert{PublishedAt: bun.NullTime{}}, "", true)
 
 			concerts, err := cs.FindPublished()
 			if err != nil {

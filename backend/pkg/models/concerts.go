@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -22,7 +21,7 @@ type Concert struct {
 	State                 string       `bun:"state,notnull" json:"state"`
 	Zip                   string       `bun:"zip,notnull" json:"zip"`
 	AdditionalInformation string       `bun:"additional_information,type:text,notnull" json:"additional_information"`
-	PublishedAt           sql.NullTime `bun:"published_at,nullzero" json:"published_at"`
+	PublishedAt           bun.NullTime `bun:"published_at,nullzero" json:"published_at"`
 	CreatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 }
