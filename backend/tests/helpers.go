@@ -64,6 +64,7 @@ func (ts *TestServer) Json(t *testing.T, method string, endpoint string, body an
 	}
 
 	req := httptest.NewRequest(method, endpoint, &buf)
+	req.Header.Set("content-type", "application/json")
 	resp, err := ts.App.Test(req)
 	if err != nil {
 		t.Fatalf("could not reach %q; err %v", endpoint, err)
