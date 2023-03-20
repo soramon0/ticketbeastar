@@ -1,7 +1,7 @@
 package models
 
 type possibleReturns interface {
-	*User | *[]User | *Concert | *[]Concert | any
+	*User | *[]User | *Concert | *[]Concert | *Order | *[]Order | any
 }
 
 type APIResponse[T possibleReturns] struct {
