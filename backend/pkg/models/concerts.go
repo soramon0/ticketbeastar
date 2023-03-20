@@ -70,7 +70,7 @@ func (cs *concertService) FindPublished() (*[]Concert, error) {
 
 func (cs *concertService) FindById(id uint64) (*Concert, error) {
 	var concert Concert
-	query := buildSelectQuery(cs.db, &concert, false)
+	query := buildSelectQuery(cs.db, &concert, false).Where("id = ?", id)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -79,7 +79,7 @@ func (cs *concertService) FindById(id uint64) (*Concert, error) {
 
 func (cs *concertService) FindPublishedById(id uint64) (*Concert, error) {
 	var concert Concert
-	query := buildSelectQuery(cs.db, &concert, true)
+	query := buildSelectQuery(cs.db, &concert, true).Where("id = ?", id)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
