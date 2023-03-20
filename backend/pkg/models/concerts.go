@@ -24,6 +24,8 @@ type Concert struct {
 	PublishedAt           bun.NullTime `bun:"published_at,nullzero" json:"published_at"`
 	CreatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
+
+	Orders []*Order `bun:"rel:has-many,join:id=concert_id" json:"orders,omitempty"`
 }
 
 type ConcertService interface {
@@ -35,6 +37,7 @@ type ConcertService interface {
 
 	// Methods for altering concerts
 	Create(concert *Concert) error
+	CreateOrder(order *Order) error
 }
 
 type concertService struct {
@@ -88,6 +91,10 @@ func (cs *concertService) Create(concert *Concert) error {
 	defer cancel()
 	_, err := cs.db.NewInsert().Model(concert).Exec(ctx)
 	return err
+}
+
+func (cs *concertService) CreateOrder(order *Order) error {
+	return nil
 }
 
 func buildSelectQuery(db *bun.DB, model any, published bool) *bun.SelectQuery {

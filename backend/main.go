@@ -19,6 +19,11 @@ func main() {
 	app := fiber.New(configs.FiberConfig())
 	services := models.NewServices(db)
 
-	routes.Register(app, services, logger)
+	vt, err := utils.NewValidator()
+	if err != nil {
+		logger.Fatalf("could not create validator %v", err)
+	}
+
+	routes.Register(app, services, vt, logger)
 	utils.StartServer(app, logger)
 }

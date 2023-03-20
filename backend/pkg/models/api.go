@@ -22,3 +22,12 @@ type APIError struct {
 	Message    string `json:"message"`
 	StatusCode int    `json:"-"`
 }
+
+type APIFieldError struct {
+	Field   string `json:"field"`
+	Message string `json:"message"`
+}
+
+type APIValidaitonErrors struct {
+	Errors []APIFieldError `json:"errors"`
+}

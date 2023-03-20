@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -26,12 +28,16 @@ type TestServer struct {
 	Log     *log.Logger
 }
 
-func NewTestServer() *TestServer {
+func NewTestServer(t *testing.T) *TestServer {
 	logger := utils.InitLogger()
+	validate, err := utils.NewValidator()
+	if err != nil {
+		t.Fatal(err)
+	}
 	app := fiber.New(configs.FiberConfig())
 	db := database.OpenConnection(utils.GetTestDatabaseURL(), logger)
 	services := models.NewServices(db)
-	routes.Register(app, services, logger)
+	routes.Register(app, services, validate, logger)
 
 	return &TestServer{
 		App:     app,
@@ -42,10 +48,21 @@ func NewTestServer() *TestServer {
 }
 
 func (ts *TestServer) Visit(t *testing.T, endpoint string) *http.Response {
-	req := httptest.NewRequest("GET", endpoint, nil)
+	return ts.Json(t, http.MethodGet, endpoint, nil)
+}
+
+func (ts *TestServer) Json(t *testing.T, method string, endpoint string, body any) *http.Response {
+	var buf bytes.Buffer
+	if body != nil {
+		if err := json.NewEncoder(&buf).Encode(body); err != nil {
+			t.Fatalf("could not encode body; %v", err)
+		}
+	}
+
+	req := httptest.NewRequest(method, endpoint, &buf)
 	resp, err := ts.App.Test(req)
 	if err != nil {
-		t.Fatalf("could not reach %s; err %v", endpoint, err)
+		t.Fatalf("could not reach %q; err %v", endpoint, err)
 	}
 
 	return resp

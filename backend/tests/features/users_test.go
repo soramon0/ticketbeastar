@@ -12,7 +12,7 @@ import (
 )
 
 func TestUsersController(t *testing.T) {
-	ts := tests.NewTestServer()
+	ts := tests.NewTestServer(t)
 	defer database.CloseConnection(ts.Db)
 
 	testCases := map[string]func(t *testing.T){
