@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"ticketbeastar/pkg/controllers"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
@@ -26,8 +27,8 @@ func TestPurchaseTickets(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250}, true)
 
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
-			op := orderPayload{Email: "john@example.com", Ticket_quantity: 3, Payment_token: ""}
-			resp := ts.Json(t, http.MethodPost, endpoint, op)
+			payload := controllers.CreateConcertOrderPayload{Email: "john@example.com", TicketPrice: 3, PaymentToken: "sds"}
+			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
 		},
