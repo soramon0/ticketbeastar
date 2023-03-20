@@ -48,10 +48,14 @@ func NewTestServer(t *testing.T) *TestServer {
 }
 
 func (ts *TestServer) Visit(t *testing.T, endpoint string) *http.Response {
+	t.Helper()
+
 	return ts.Json(t, http.MethodGet, endpoint, nil)
 }
 
 func (ts *TestServer) Json(t *testing.T, method string, endpoint string, body any) *http.Response {
+	t.Helper()
+
 	var buf bytes.Buffer
 	if body != nil {
 		if err := json.NewEncoder(&buf).Encode(body); err != nil {
@@ -69,24 +73,32 @@ func (ts *TestServer) Json(t *testing.T, method string, endpoint string, body an
 }
 
 func (ts *TestServer) AssertResponseStatus(t *testing.T, gotCode, wantCode int) {
+	t.Helper()
+
 	if gotCode != wantCode {
 		t.Fatalf("response status code should be %d; got %d", wantCode, gotCode)
 	}
 }
 
 func (ts *TestServer) AssertResponseError(t *testing.T, gotError, wantError *models.APIError) {
+	t.Helper()
+
 	if !reflect.DeepEqual(gotError, wantError) {
 		t.Fatalf("api response error should %v; got %v", wantError, gotError)
 	}
 }
 
 func (ts *TestServer) AssertResponseCount(t *testing.T, gotCount, wantCount int) {
+	t.Helper()
+
 	if gotCount != wantCount {
 		t.Fatalf("api response count should be %d; got %d", wantCount, gotCount)
 	}
 }
 
 func SetupConcertTable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
 	_, err := db.NewCreateTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
 		t.Fatalf("NewCreateTable(Concert) err %v; want nil", err)
@@ -94,6 +106,8 @@ func SetupConcertTable(t *testing.T, db *bun.DB) {
 }
 
 func TeardownConcertTable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
 	_, err := db.NewDropTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop concerts table err %v; want nil", err)
@@ -101,6 +115,8 @@ func TeardownConcertTable(t *testing.T, db *bun.DB) {
 }
 
 func CreateConcert(t *testing.T, db *bun.DB, overrides *models.Concert, insert bool) *models.Concert {
+	t.Helper()
+
 	date, err := time.Parse(time.RFC822, "02 Dec 06 08:00 MST")
 	if err != nil {
 		t.Fatalf("createConcert(date) err %v; want nil", err)
