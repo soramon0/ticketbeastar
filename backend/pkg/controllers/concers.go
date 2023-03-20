@@ -96,8 +96,9 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 
 	order := &models.Order{Email: payload.Email, ConcertId: concert.Id}
 	if err := c.order.Create(order); err != nil {
+		c.log.Println("Failed to create order", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	return ctx.JSON(models.NewAPIResponse(order, 0))
+	return ctx.Status(fiber.StatusCreated).JSON(models.NewAPIResponse(order, 0))
 }
