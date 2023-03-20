@@ -27,5 +27,5 @@ func (u *Users) GetUsers(c *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: err.Error()}
 	}
 
-	return c.JSON(models.NewAPIResponse(users, len(*users), nil))
+	return c.JSON(models.NewAPIResponse(users, len(*users)))
 }

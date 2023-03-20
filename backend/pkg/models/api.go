@@ -10,11 +10,10 @@ type APIResponse[T possibleReturns] struct {
 	Error *APIError `json:"error,omitempty"`
 }
 
-func NewAPIResponse[T possibleReturns](data T, count int, err *APIError) APIResponse[T] {
+func NewAPIResponse[T possibleReturns](data T, count int) APIResponse[T] {
 	return APIResponse[T]{
 		Data:  data,
 		Count: count,
-		Error: err,
 	}
 }
 

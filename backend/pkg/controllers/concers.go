@@ -35,7 +35,7 @@ func (c *Concerts) GetConcerts(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	return ctx.JSON(models.NewAPIResponse(concerts, len(*concerts), nil))
+	return ctx.JSON(models.NewAPIResponse(concerts, len(*concerts)))
 }
 
 func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
@@ -54,7 +54,7 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	return ctx.JSON(models.NewAPIResponse(concert, 0, nil))
+	return ctx.JSON(models.NewAPIResponse(concert, 0))
 }
 
 type CreateConcertOrderPayload struct {
@@ -64,6 +64,11 @@ type CreateConcertOrderPayload struct {
 }
 
 func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
+	id, err := strconv.ParseUint(ctx.Params("id"), 10, 64)
+	if err != nil {
+		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
+	}
+
 	payload := new(CreateConcertOrderPayload)
 	if err := ctx.BodyParser(payload); err != nil {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: err.Error()}
@@ -77,5 +82,15 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
 	}
 
-	return ctx.SendStatus(fiber.StatusCreated)
+	concert, err := c.service.FindPublishedById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
+		}
+
+		c.log.Println("FindPublishedById", err)
+		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
+	}
+
+	return ctx.JSON(models.NewAPIResponse(concert, 0))
 }
