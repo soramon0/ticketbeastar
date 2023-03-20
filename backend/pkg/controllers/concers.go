@@ -14,22 +14,24 @@ import (
 )
 
 type Concerts struct {
-	service models.ConcertService
+	concert models.ConcertService
+	order   models.OrderService
 	vt      *utils.ValidatorTransaltor
 	log     *log.Logger
 }
 
 // New Users is used to create a new Users controller.
-func NewConcerts(cs models.ConcertService, vt *utils.ValidatorTransaltor, l *log.Logger) *Concerts {
+func NewConcerts(cs models.ConcertService, os models.OrderService, vt *utils.ValidatorTransaltor, l *log.Logger) *Concerts {
 	return &Concerts{
-		service: cs,
+		concert: cs,
+		order:   os,
 		vt:      vt,
 		log:     l,
 	}
 }
 
 func (c *Concerts) GetConcerts(ctx *fiber.Ctx) error {
-	concerts, err := c.service.FindPublished()
+	concerts, err := c.concert.FindPublished()
 	if err != nil {
 		c.log.Println("GetConcerts", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
@@ -44,7 +46,7 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
 	}
 
-	concert, err := c.service.FindPublishedById(id)
+	concert, err := c.concert.FindPublishedById(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
@@ -82,7 +84,7 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
 	}
 
-	concert, err := c.service.FindPublishedById(id)
+	concert, err := c.concert.FindPublishedById(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}

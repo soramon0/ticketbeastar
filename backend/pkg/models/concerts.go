@@ -29,7 +29,7 @@ type Concert struct {
 }
 
 type ConcertService interface {
-	// Methods for querying users
+	// Methods for querying orders
 	Find() (*[]Concert, error)
 	FindPublished() (*[]Concert, error)
 	FindById(id uint64) (*Concert, error)
@@ -37,7 +37,6 @@ type ConcertService interface {
 
 	// Methods for altering concerts
 	Create(concert *Concert) error
-	CreateOrder(order *Order) error
 }
 
 type concertService struct {
@@ -91,10 +90,6 @@ func (cs *concertService) Create(concert *Concert) error {
 	defer cancel()
 	_, err := cs.db.NewInsert().Model(concert).Exec(ctx)
 	return err
-}
-
-func (cs *concertService) CreateOrder(order *Order) error {
-	return nil
 }
 
 func buildSelectQuery(db *bun.DB, model any, published bool) *bun.SelectQuery {
