@@ -102,7 +102,7 @@ func SetupConcertTable(t *testing.T, db *bun.DB) {
 
 	_, err := db.NewCreateTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
-		t.Fatalf("NewCreateTable(Concert) err %v; want nil", err)
+		t.Fatalf("SetupConcertTable() err %v; want nil", err)
 	}
 }
 
@@ -112,6 +112,24 @@ func TeardownConcertTable(t *testing.T, db *bun.DB) {
 	_, err := db.NewDropTable().Model((*models.Concert)(nil)).Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop concerts table err %v; want nil", err)
+	}
+}
+
+func SetupOrderTable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
+	_, err := db.NewCreateTable().Model((*models.Order)(nil)).Exec(context.Background())
+	if err != nil {
+		t.Fatalf("SetupOrderTable() err %v; want nil", err)
+	}
+}
+
+func TeardownOrderTable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
+	_, err := db.NewDropTable().Model((*models.Order)(nil)).Exec(context.Background())
+	if err != nil {
+		t.Fatalf("Drop orders table err %v; want nil", err)
 	}
 }
 
@@ -191,7 +209,7 @@ func overrideConcert(concert *models.Concert, c models.Concert) {
 func SetupUserTable(t *testing.T, db *bun.DB) {
 	_, err := db.NewCreateTable().Model((*models.User)(nil)).Exec(context.Background())
 	if err != nil {
-		t.Fatalf("NewCreateTable(User) err %v; want nil", err)
+		t.Fatalf("SetupUserTable() err %v; want nil", err)
 	}
 }
 
