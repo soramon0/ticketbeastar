@@ -16,15 +16,17 @@ import (
 type Concerts struct {
 	concert models.ConcertService
 	order   models.OrderService
+	ticket  models.TicketService
 	vt      *utils.ValidatorTransaltor
 	log     *log.Logger
 }
 
 // New Users is used to create a new Users controller.
-func NewConcerts(cs models.ConcertService, os models.OrderService, vt *utils.ValidatorTransaltor, l *log.Logger) *Concerts {
+func NewConcerts(cs models.ConcertService, os models.OrderService, ts models.TicketService, vt *utils.ValidatorTransaltor, l *log.Logger) *Concerts {
 	return &Concerts{
 		concert: cs,
 		order:   os,
+		ticket:  ts,
 		vt:      vt,
 		log:     l,
 	}
@@ -60,9 +62,9 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 }
 
 type CreateConcertOrderPayload struct {
-	Email        string `json:"email" validate:"required,email,omitempty"`
-	TicketPrice  int64  `json:"ticket_price" validate:"required,number,gte=0,omitempty"`
-	PaymentToken string `json:"payment_token" validate:"required,omitempty"`
+	Email          string `json:"email" validate:"required,email,omitempty"`
+	TicketQuantity int64  `json:"ticket_quantity" validate:"required,number,gte=0,omitempty"`
+	PaymentToken   string `json:"payment_token" validate:"required,omitempty"`
 }
 
 func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
@@ -97,6 +99,16 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 	order := &models.Order{Email: payload.Email, ConcertId: concert.Id}
 	if err := c.order.Create(order); err != nil {
 		c.log.Println("Failed to create order", err)
+		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
+	}
+
+	tickets := make([]models.Ticket, payload.TicketQuantity)
+	for i := range tickets {
+		tickets[i].OrderId = order.Id
+		order.Tickets = append(order.Tickets, &tickets[i])
+	}
+	if err := c.ticket.BulkCreate(&tickets); err != nil {
+		c.log.Println("Failed to create tickets", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 

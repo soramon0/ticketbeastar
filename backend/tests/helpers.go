@@ -133,6 +133,24 @@ func TeardownOrderTable(t *testing.T, db *bun.DB) {
 	}
 }
 
+func SetupTicketable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
+	_, err := db.NewCreateTable().Model((*models.Ticket)(nil)).Exec(context.Background())
+	if err != nil {
+		t.Fatalf("SetupTicketTable() err %v; want nil", err)
+	}
+}
+
+func TeardownTicketTable(t *testing.T, db *bun.DB) {
+	t.Helper()
+
+	_, err := db.NewDropTable().Model((*models.Ticket)(nil)).Exec(context.Background())
+	if err != nil {
+		t.Fatalf("Drop tickets table err %v; want nil", err)
+	}
+}
+
 func CreateConcert(t *testing.T, db *bun.DB, overrides *models.Concert, insert bool) *models.Concert {
 	t.Helper()
 

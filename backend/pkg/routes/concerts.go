@@ -12,7 +12,7 @@ import (
 
 func registerConcertRoutes(a *fiber.App, s *models.Services, vt *utils.ValidatorTransaltor, l *log.Logger) *fiber.Router {
 	router := a.Group("/api/v1/concerts")
-	concertsC := controllers.NewConcerts(s.Concert, s.Order, vt, l)
+	concertsC := controllers.NewConcerts(s.Concert, s.Order, s.Ticket, vt, l)
 
 	router.Get("/", concertsC.GetConcerts)
 	router.Get("/:id", concertsC.GetConcertById)

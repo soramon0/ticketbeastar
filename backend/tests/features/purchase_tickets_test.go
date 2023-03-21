@@ -23,15 +23,34 @@ func TestPurchaseTickets(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
 
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
-			payload := controllers.CreateConcertOrderPayload{Email: "john@example.com", TicketPrice: 3, PaymentToken: "valid test token"}
+			email := "john@example.com"
+			TicketQuantity := 3
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: int64(TicketQuantity), PaymentToken: "valid test token"}
 			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
 
-			// assert order created for email
-			// assert order for 3 tickets created
+			order, err := ts.Service.Order.FindByEmail(email)
+			if err != nil {
+				t.Fatalf("order should not be %v; %v", order, err)
+			}
+			if order.ConcertId != concert.Id {
+				t.Fatalf("order concert id should be %d; got %d", order.ConcertId, concert.Id)
+			}
+
+			tickets, err := ts.Service.Ticket.Find()
+			if err != nil {
+				t.Fatalf("tickets should not be %v; %v", order, err)
+			}
+			if len(*tickets) != TicketQuantity {
+				t.Fatalf("should have created %d tickets; got %d", TicketQuantity, len(*tickets))
+			}
+			for i, ticket := range *tickets {
+				if ticket.OrderId != order.Id {
+					t.Fatalf("ticket(%d) should have order id %d; got %d", i, order.Id, ticket.OrderId)
+				}
+			}
 			// assert total price is ticket * quantity
-			// ts.Service.Order.FindByEmail()
 		},
 	}
 
@@ -39,9 +58,11 @@ func TestPurchaseTickets(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			tests.SetupConcertTable(t, ts.Db)
 			tests.SetupOrderTable(t, ts.Db)
+			tests.SetupTicketable(t, ts.Db)
 			defer func() {
-				tests.TeardownConcertTable(t, ts.Db)
+				tests.TeardownTicketTable(t, ts.Db)
 				tests.TeardownOrderTable(t, ts.Db)
+				tests.TeardownConcertTable(t, ts.Db)
 			}()
 			tc(t)
 		})
