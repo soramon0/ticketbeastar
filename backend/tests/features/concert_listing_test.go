@@ -1,9 +1,7 @@
 package features_test
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"testing"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
@@ -22,7 +20,7 @@ func TestConcertsListing(t *testing.T) {
 		"can view single published concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
 			resp := ts.Visit(t, fmt.Sprintf("/api/v1/concerts/%d", concert.Id))
-			api := unmarshalConcert(t, resp.Body)
+			api := tests.UnmarshalConcert(t, resp.Body)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
 			ts.AssertResponseCount(t, api.Count, 0)
@@ -39,7 +37,7 @@ func TestConcertsListing(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d", concert.Id)
 			resp := ts.Visit(t, endpoint)
-			api := unmarshalConcert(t, resp.Body)
+			api := tests.UnmarshalConcert(t, resp.Body)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
 			ts.AssertResponseCount(t, api.Count, 0)
@@ -53,7 +51,7 @@ func TestConcertsListing(t *testing.T) {
 			tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
 			concert2 := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{Time: time.Now()}}, true)
 			resp := ts.Visit(t, "/api/v1/concerts")
-			api := unmarshalConcerts(t, resp.Body)
+			api := tests.UnmarshalConcerts(t, resp.Body)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusOK)
 			ts.AssertResponseCount(t, api.Count, 1)
@@ -76,32 +74,4 @@ func TestConcertsListing(t *testing.T) {
 			tc(t)
 		})
 	}
-}
-
-func unmarshalConcert(t *testing.T, body io.ReadCloser) models.APIResponse[*models.Concert] {
-	content, err := io.ReadAll(body)
-	if err != nil {
-		t.Fatalf("could not read response body; err %v", err)
-	}
-	defer body.Close()
-
-	var resp models.APIResponse[*models.Concert]
-	if err := json.Unmarshal(content, &resp); err != nil {
-		t.Fatalf("could not unmarshal concert response body; err %v", err)
-	}
-	return resp
-}
-
-func unmarshalConcerts(t *testing.T, body io.ReadCloser) models.APIResponse[*[]models.Concert] {
-	content, err := io.ReadAll(body)
-	if err != nil {
-		t.Fatalf("could not read response body; err %v", err)
-	}
-	defer body.Close()
-
-	var resp models.APIResponse[*[]models.Concert]
-	if err := json.Unmarshal(content, &resp); err != nil {
-		t.Fatalf("could not unmarshal concerts response body; err %v", err)
-	}
-	return resp
 }

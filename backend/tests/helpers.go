@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -270,4 +271,32 @@ func CreateUser(t *testing.T, db *bun.DB, insert bool) *models.User {
 		}
 	}
 	return user
+}
+
+func UnmarshalConcert(t *testing.T, body io.ReadCloser) models.APIResponse[*models.Concert] {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIResponse[*models.Concert]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concert response body; err %v", err)
+	}
+	return resp
+}
+
+func UnmarshalConcerts(t *testing.T, body io.ReadCloser) models.APIResponse[*[]models.Concert] {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIResponse[*[]models.Concert]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concerts response body; err %v", err)
+	}
+	return resp
 }

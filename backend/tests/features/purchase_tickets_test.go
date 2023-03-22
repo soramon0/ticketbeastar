@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/schema"
 )
 
@@ -54,6 +55,18 @@ func TestPurchaseTickets(t *testing.T) {
 				}
 			}
 			// assert total price is ticket * quantity
+		},
+		"customer cannot purchase tickets to an unpublished concert": func(t *testing.T) {
+			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
+			payload := controllers.CreateConcertOrderPayload{Email: "john@example.com", TicketQuantity: 1, PaymentToken: validPaymentToken}
+			resp := orderTickets(t, ts, concert.Id, payload)
+
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
+
+			api := tests.UnmarshalConcert(t, resp.Body)
+			ts.AssertResponseError(t, api.Error, &models.APIError{Message: "Concert not found"})
+			// assert no orders were created for that concert
+			// assert no charge was made
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
