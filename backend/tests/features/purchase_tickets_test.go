@@ -1,7 +1,9 @@
 package features_test
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 	"ticketbeastar/pkg/controllers"
@@ -52,6 +54,24 @@ func TestPurchaseTickets(t *testing.T) {
 			}
 			// assert total price is ticket * quantity
 		},
+		"email is required to purchase tickets": func(t *testing.T) {
+			concert := tests.CreateConcert(t, ts.Db, nil, true)
+			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
+			payload := controllers.CreateConcertOrderPayload{Email: "", TicketQuantity: 3, PaymentToken: "valid test token"}
+			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
+			gotErr := unmarshalValidationErrors(t, resp.Body)
+
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
+
+			if len(gotErr.Errors) != 1 {
+				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
+			}
+
+			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
+				{Field: "email", Message: "email is required"},
+			}}
+			ts.AssertResponseValidationError(t, gotErr, wantErr)
+		},
 	}
 
 	for name, tc := range testsCases {
@@ -67,4 +87,18 @@ func TestPurchaseTickets(t *testing.T) {
 			tc(t)
 		})
 	}
+}
+
+func unmarshalValidationErrors(t *testing.T, body io.ReadCloser) *models.APIValidaitonErrors {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIValidaitonErrors
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal validation errors; err %v", err)
+	}
+	return &resp
 }

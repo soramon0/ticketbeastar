@@ -89,6 +89,14 @@ func (ts *TestServer) AssertResponseError(t *testing.T, gotError, wantError *mod
 	}
 }
 
+func (ts *TestServer) AssertResponseValidationError(t *testing.T, gotError, wantError *models.APIValidaitonErrors) {
+	t.Helper()
+
+	if !reflect.DeepEqual(gotError, wantError) {
+		t.Fatalf("api response error should %v; got %v", wantError, gotError)
+	}
+}
+
 func (ts *TestServer) AssertResponseCount(t *testing.T, gotCount, wantCount int) {
 	t.Helper()
 
