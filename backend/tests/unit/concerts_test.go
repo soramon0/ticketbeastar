@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func TestConcertModels(t *testing.T) {
+func TestConcertModel(t *testing.T) {
 	db := database.OpenConnection(utils.GetTestDatabaseURL(), utils.InitLogger())
 	defer database.CloseConnection(db)
 
