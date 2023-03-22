@@ -63,7 +63,7 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 
 type CreateConcertOrderPayload struct {
 	Email          string `json:"email" validate:"required,email,omitempty"`
-	TicketQuantity uint64 `json:"ticket_quantity" validate:"required,number,gte=0,omitempty"`
+	TicketQuantity int    `json:"ticket_quantity" validate:"required,number,gte=1,omitempty"`
 	PaymentToken   string `json:"payment_token" validate:"required,omitempty"`
 }
 
@@ -95,7 +95,7 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	amount := payload.TicketQuantity * concert.TicketPrice
+	amount := uint64(payload.TicketQuantity) * concert.TicketPrice
 	if err := chargePayment(amount, payload.PaymentToken); err != nil {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
 	}
@@ -106,7 +106,7 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	if _, err = c.ticket.CreateOrderTickets(order, payload.TicketQuantity); err != nil {
+	if _, err = c.ticket.CreateOrderTickets(order, uint64(payload.TicketQuantity)); err != nil {
 		c.log.Println("Failed to create tickets", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
