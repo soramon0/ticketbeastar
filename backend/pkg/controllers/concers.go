@@ -72,6 +72,15 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 	if err != nil {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
 	}
+	concert, err := c.concert.FindPublishedById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
+		}
+
+		c.log.Println("FindPublishedById", err)
+		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
+	}
 
 	payload := new(CreateConcertOrderPayload)
 	if err := ctx.BodyParser(payload); err != nil {
@@ -83,16 +92,6 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 			return ctx.Status(fiber.StatusBadRequest).JSON(c.vt.ValidationErrors(ve))
 		}
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
-	}
-
-	concert, err := c.concert.FindPublishedById(id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
-		}
-
-		c.log.Println("FindPublishedById", err)
-		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
 	amount := uint64(payload.TicketQuantity) * concert.TicketPrice
