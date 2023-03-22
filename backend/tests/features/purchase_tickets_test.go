@@ -23,12 +23,10 @@ func TestPurchaseTickets(t *testing.T) {
 	testsCases := map[string]func(t *testing.T){
 		"customer can purchase concert ticket": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
-
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			email := "john@example.com"
 			ticketQuantity := 3
 			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: "valid test token"}
-			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
+			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
 
@@ -56,17 +54,15 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			payload := controllers.CreateConcertOrderPayload{Email: "", TicketQuantity: 3, PaymentToken: "valid test token"}
-			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
-			gotErr := unmarshalValidationErrors(t, resp.Body)
+			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
 
+			gotErr := unmarshalValidationErrors(t, resp.Body)
 			if len(gotErr.Errors) != 1 {
 				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
 			}
-
 			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
 				{Field: "email", Message: "email is required"},
 			}}
@@ -74,17 +70,15 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"email must be valid to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			payload := controllers.CreateConcertOrderPayload{Email: "not-a-email-address", TicketQuantity: 3, PaymentToken: "valid test token"}
-			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
-			gotErr := unmarshalValidationErrors(t, resp.Body)
+			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
 
+			gotErr := unmarshalValidationErrors(t, resp.Body)
 			if len(gotErr.Errors) != 1 {
 				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
 			}
-
 			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
 				{Field: "email", Message: "email must be a valid email address"},
 			}}
@@ -92,17 +86,15 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"ticket_quantity is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: 0, PaymentToken: "valid test token"}
-			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
-			gotErr := unmarshalValidationErrors(t, resp.Body)
+			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
 
+			gotErr := unmarshalValidationErrors(t, resp.Body)
 			if len(gotErr.Errors) != 1 {
 				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
 			}
-
 			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
 				{Field: "ticket_quantity", Message: "ticket_quantity is required"},
 			}}
@@ -110,17 +102,15 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"ticket_quantity must at least be 1 to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: -1, PaymentToken: "valid test token"}
-			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
-			gotErr := unmarshalValidationErrors(t, resp.Body)
+			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
 
+			gotErr := unmarshalValidationErrors(t, resp.Body)
 			if len(gotErr.Errors) != 1 {
 				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
 			}
-
 			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
 				{Field: "ticket_quantity", Message: "ticket_quantity must be 1 or greater"},
 			}}
@@ -141,6 +131,11 @@ func TestPurchaseTickets(t *testing.T) {
 			tc(t)
 		})
 	}
+}
+
+func orderTickets(t *testing.T, ts *tests.TestServer, concertId uint64, payload controllers.CreateConcertOrderPayload) *http.Response {
+	endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concertId)
+	return ts.Json(t, http.MethodPost, endpoint, payload)
 }
 
 func unmarshalValidationErrors(t *testing.T, body io.ReadCloser) *models.APIValidaitonErrors {
