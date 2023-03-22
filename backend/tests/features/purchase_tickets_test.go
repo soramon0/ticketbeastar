@@ -25,7 +25,7 @@ func TestPurchaseTickets(t *testing.T) {
 	validPaymentToken := "valid payment token"
 
 	testsCases := map[string]func(t *testing.T){
-		"customer can purchase concert ticket": func(t *testing.T) {
+		"customer can purchase tickets to a published concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
 			email := "john@example.com"
 			ticketQuantity := 3
