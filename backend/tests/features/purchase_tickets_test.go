@@ -1,6 +1,7 @@
 package features_test
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,12 +21,14 @@ func TestPurchaseTickets(t *testing.T) {
 	ts := tests.NewTestServer(t)
 	defer database.CloseConnection(ts.Db)
 
+	validPaymentToken := "valid payment token"
+
 	testsCases := map[string]func(t *testing.T){
 		"customer can purchase concert ticket": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
 			email := "john@example.com"
 			ticketQuantity := 3
-			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: "valid test token"}
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
@@ -54,7 +57,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			payload := controllers.CreateConcertOrderPayload{Email: "", TicketQuantity: 3, PaymentToken: "valid test token"}
+			payload := controllers.CreateConcertOrderPayload{Email: "", TicketQuantity: 3, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
@@ -70,7 +73,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"email must be valid to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			payload := controllers.CreateConcertOrderPayload{Email: "not-a-email-address", TicketQuantity: 3, PaymentToken: "valid test token"}
+			payload := controllers.CreateConcertOrderPayload{Email: "not-a-email-address", TicketQuantity: 3, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
@@ -86,7 +89,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"ticket_quantity is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: 0, PaymentToken: "valid test token"}
+			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: 0, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
@@ -102,7 +105,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"ticket_quantity must at least be 1 to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
-			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: -1, PaymentToken: "valid test token"}
+			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: -1, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
@@ -115,6 +118,37 @@ func TestPurchaseTickets(t *testing.T) {
 				{Field: "ticket_quantity", Message: "ticket_quantity must be 1 or greater"},
 			}}
 			ts.AssertResponseValidationError(t, gotErr, wantErr)
+		},
+		"payment_token is required to purchase tickets": func(t *testing.T) {
+			concert := tests.CreateConcert(t, ts.Db, nil, true)
+			payload := controllers.CreateConcertOrderPayload{Email: "jon@example.com", TicketQuantity: 1, PaymentToken: ""}
+			resp := orderTickets(t, ts, concert.Id, payload)
+
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusBadRequest)
+
+			gotErr := unmarshalValidationErrors(t, resp.Body)
+			if len(gotErr.Errors) != 1 {
+				t.Fatalf("want %d validation error(s); got %d", 1, len(gotErr.Errors))
+			}
+			wantErr := &models.APIValidaitonErrors{Errors: []models.APIFieldError{
+				{Field: "payment_token", Message: "payment_token is required"},
+			}}
+			ts.AssertResponseValidationError(t, gotErr, wantErr)
+		},
+		"an order is not created if payment fails": func(t *testing.T) {
+			concert := tests.CreateConcert(t, ts.Db, nil, true)
+			email := "jon@example.com"
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: 1, PaymentToken: "invalid payment token"}
+			resp := orderTickets(t, ts, concert.Id, payload)
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusUnprocessableEntity)
+
+			api := unmarshalOrder(t, resp.Body)
+			ts.AssertResponseError(t, api.Error, &models.APIError{Message: models.ErrInvalidPaymentToken.Error()})
+
+			_, err := ts.Service.Order.FindByEmail(email)
+			if err != sql.ErrNoRows {
+				t.Fatalf("no order should be created; got %v", err)
+			}
 		},
 	}
 
@@ -150,4 +184,18 @@ func unmarshalValidationErrors(t *testing.T, body io.ReadCloser) *models.APIVali
 		t.Fatalf("could not unmarshal validation errors; err %v", err)
 	}
 	return &resp
+}
+
+func unmarshalOrder(t *testing.T, body io.ReadCloser) models.APIResponse[*models.Order] {
+	content, err := io.ReadAll(body)
+	if err != nil {
+		t.Fatalf("could not read response body; err %v", err)
+	}
+	defer body.Close()
+
+	var resp models.APIResponse[*models.Order]
+	if err := json.Unmarshal(content, &resp); err != nil {
+		t.Fatalf("could not unmarshal concerts response body; err %v", err)
+	}
+	return resp
 }

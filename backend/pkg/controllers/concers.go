@@ -97,6 +97,11 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 
 	amount := uint64(payload.TicketQuantity) * concert.TicketPrice
 	if err := chargePayment(amount, payload.PaymentToken); err != nil {
+		if err == models.ErrInvalidPaymentToken {
+			return &fiber.Error{Code: fiber.StatusUnprocessableEntity, Message: err.Error()}
+		}
+
+		c.log.Println("Failed to process paymanet", err)
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
 	}
 
@@ -115,5 +120,10 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 }
 
 func chargePayment(amount uint64, token string) error {
+	validPaymentToken := "valid payment token"
+	if token != validPaymentToken {
+		return models.ErrInvalidPaymentToken
+	}
+
 	return nil
 }
