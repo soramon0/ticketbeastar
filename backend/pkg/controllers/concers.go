@@ -63,7 +63,7 @@ func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
 
 type CreateConcertOrderPayload struct {
 	Email          string `json:"email" validate:"required,email,omitempty"`
-	TicketQuantity int64  `json:"ticket_quantity" validate:"required,number,gte=0,omitempty"`
+	TicketQuantity uint64 `json:"ticket_quantity" validate:"required,number,gte=0,omitempty"`
 	PaymentToken   string `json:"payment_token" validate:"required,omitempty"`
 }
 
@@ -77,7 +77,6 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(payload); err != nil {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: err.Error()}
 	}
-
 	if err := c.vt.Validator.Struct(payload); err != nil {
 		var ve validator.ValidationErrors
 		if errors.As(err, &ve) {
@@ -96,21 +95,25 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	order := &models.Order{Email: payload.Email, ConcertId: concert.Id}
-	if err := c.order.Create(order); err != nil {
+	amount := payload.TicketQuantity * concert.TicketPrice
+	if err := chargePayment(amount, payload.PaymentToken); err != nil {
+		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
+	}
+
+	order, err := c.order.Create(payload.Email, concert.Id)
+	if err != nil {
 		c.log.Println("Failed to create order", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
-	tickets := make([]models.Ticket, payload.TicketQuantity)
-	for i := range tickets {
-		tickets[i].OrderId = order.Id
-		order.Tickets = append(order.Tickets, &tickets[i])
-	}
-	if err := c.ticket.BulkCreate(&tickets); err != nil {
+	if _, err = c.ticket.CreateOrderTickets(order, payload.TicketQuantity); err != nil {
 		c.log.Println("Failed to create tickets", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(models.NewAPIResponse(order, 0))
+}
+
+func chargePayment(amount uint64, token string) error {
+	return nil
 }

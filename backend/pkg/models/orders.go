@@ -26,7 +26,7 @@ type OrderService interface {
 	FindByEmail(email string) (*Order, error)
 
 	// Methods for altering orders
-	Create(order *Order) error
+	Create(email string, concertId uint64) (*Order, error)
 }
 
 type orderService struct {
@@ -63,9 +63,13 @@ func (os *orderService) FindByEmail(email string) (*Order, error) {
 	return &order, err
 }
 
-func (os *orderService) Create(order *Order) error {
+func (os *orderService) Create(email string, concertId uint64) (*Order, error) {
+	order := &Order{Email: email, ConcertId: concertId}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := os.db.NewInsert().Model(order).Exec(ctx)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	return order, nil
 }

@@ -26,6 +26,7 @@ type TicketService interface {
 	// Methods for altering tickets
 	Create(ticket *Ticket) error
 	BulkCreate(tickets *[]Ticket) error
+	CreateOrderTickets(order *Order, ticketQuantity uint64) (*[]Ticket, error)
 }
 
 type ticketService struct {
@@ -58,4 +59,17 @@ func (os *ticketService) BulkCreate(tickets *[]Ticket) error {
 	defer cancel()
 	_, err := os.db.NewInsert().Model(tickets).Exec(ctx)
 	return err
+}
+
+func (os *ticketService) CreateOrderTickets(order *Order, ticketQuantity uint64) (*[]Ticket, error) {
+	tickets := make([]Ticket, ticketQuantity)
+	for i := range tickets {
+		tickets[i].OrderId = order.Id
+		order.Tickets = append(order.Tickets, &tickets[i])
+	}
+
+	if err := os.BulkCreate(&tickets); err != nil {
+		return nil, err
+	}
+	return &tickets, nil
 }

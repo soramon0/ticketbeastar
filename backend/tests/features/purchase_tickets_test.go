@@ -24,8 +24,8 @@ func TestPurchaseTickets(t *testing.T) {
 
 			endpoint := fmt.Sprintf("/api/v1/concerts/%d/orders", concert.Id)
 			email := "john@example.com"
-			TicketQuantity := 3
-			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: int64(TicketQuantity), PaymentToken: "valid test token"}
+			var ticketQuantity uint64 = 3
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: "valid test token"}
 			resp := ts.Json(t, http.MethodPost, endpoint, &payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
@@ -42,8 +42,8 @@ func TestPurchaseTickets(t *testing.T) {
 			if err != nil {
 				t.Fatalf("tickets should not be %v; %v", order, err)
 			}
-			if len(*tickets) != TicketQuantity {
-				t.Fatalf("should have created %d tickets; got %d", TicketQuantity, len(*tickets))
+			if len(*tickets) != int(ticketQuantity) {
+				t.Fatalf("should have created %d tickets; got %d", ticketQuantity, len(*tickets))
 			}
 			for i, ticket := range *tickets {
 				if ticket.OrderId != order.Id {
