@@ -58,14 +58,18 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"customer cannot purchase tickets to an unpublished concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
-			payload := controllers.CreateConcertOrderPayload{Email: "john@example.com", TicketQuantity: 1, PaymentToken: validPaymentToken}
+			email := "john@example.com"
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: 1, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusNotFound)
 
 			api := tests.UnmarshalConcert(t, resp.Body)
 			ts.AssertResponseError(t, api.Error, &models.APIError{Message: "Concert not found"})
-			// assert no orders were created for that concert
+
+			if _, err := ts.Service.Order.FindByEmail(email); err != sql.ErrNoRows {
+				t.Fatalf("no order should be created; got %v", err)
+			}
 			// assert no charge was made
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
