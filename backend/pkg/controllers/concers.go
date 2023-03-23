@@ -3,9 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
-	"strconv"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/pkg/utils"
 
@@ -43,13 +41,11 @@ func (c *Concerts) GetConcerts(ctx *fiber.Ctx) error {
 }
 
 func (c *Concerts) GetConcertById(ctx *fiber.Ctx) error {
-	id, err := strconv.ParseUint(ctx.Params("id"), 10, 64)
+	concert, err := c.concert.FindPublishedById(ctx.Params("id"))
 	if err != nil {
-		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
-	}
-
-	concert, err := c.concert.FindPublishedById(id)
-	if err != nil {
+		if err == models.ErrInvalidId {
+			return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
+		}
 		if err == sql.ErrNoRows {
 			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
 		}
@@ -68,12 +64,11 @@ type CreateConcertOrderPayload struct {
 }
 
 func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
-	id, err := strconv.ParseUint(ctx.Params("id"), 10, 64)
+	concert, err := c.concert.FindPublishedById(ctx.Params("id"))
 	if err != nil {
-		return &fiber.Error{Code: fiber.StatusBadRequest, Message: fmt.Sprintf(`id %q is invalid`, ctx.Params("id"))}
-	}
-	concert, err := c.concert.FindPublishedById(id)
-	if err != nil {
+		if err == models.ErrInvalidId {
+			return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
+		}
 		if err == sql.ErrNoRows {
 			return &fiber.Error{Code: fiber.StatusNotFound, Message: "Concert not found"}
 		}

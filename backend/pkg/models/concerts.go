@@ -33,8 +33,8 @@ type ConcertService interface {
 	// Methods for querying orders
 	Find() (*[]Concert, error)
 	FindPublished() (*[]Concert, error)
-	FindById(id uint64) (*Concert, error)
-	FindPublishedById(id uint64) (*Concert, error)
+	FindById(id string) (*Concert, error)
+	FindPublishedById(id string) (*Concert, error)
 
 	// Methods for altering concerts
 	Create(concert *Concert) error
@@ -68,18 +68,28 @@ func (cs *concertService) FindPublished() (*[]Concert, error) {
 	return &concerts, query.Scan(ctx)
 }
 
-func (cs *concertService) FindById(id uint64) (*Concert, error) {
+func (cs *concertService) FindById(id string) (*Concert, error) {
+	parsedId, err := parseId(id)
+	if err != nil {
+		return nil, err
+	}
+
 	var concert Concert
-	query := buildSelectQuery(cs.db, &concert, false).Where("id = ?", id)
+	query := buildSelectQuery(cs.db, &concert, false).Where("id = ?", parsedId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return &concert, query.Scan(ctx)
 }
 
-func (cs *concertService) FindPublishedById(id uint64) (*Concert, error) {
+func (cs *concertService) FindPublishedById(id string) (*Concert, error) {
+	parsedId, err := parseId(id)
+	if err != nil {
+		return nil, err
+	}
+
 	var concert Concert
-	query := buildSelectQuery(cs.db, &concert, true).Where("id = ?", id)
+	query := buildSelectQuery(cs.db, &concert, true).Where("id = ?", parsedId)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

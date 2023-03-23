@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strconv"
+
 	"github.com/uptrace/bun"
 )
 
@@ -23,4 +25,12 @@ func NewServices(db *bun.DB) *Services {
 		Order:   os,
 		Ticket:  ts,
 	}
+}
+
+func parseId(id string) (uint64, error) {
+	parsedId, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return 0, ErrInvalidId
+	}
+	return parsedId, nil
 }
