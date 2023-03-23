@@ -29,6 +29,7 @@ func TestPurchaseTickets(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
 			email := "john@example.com"
 			ticketQuantity := 3
+			ts.Service.Ticket.Add(concert, uint64(ticketQuantity))
 			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
 
@@ -71,6 +72,32 @@ func TestPurchaseTickets(t *testing.T) {
 				t.Fatalf("no order should be created; got %v", err)
 			}
 			// assert no charge was made
+		},
+		"cannot purchase more tickets than available": func(t *testing.T) {
+			concert := tests.CreateConcert(t, ts.Db, nil, true)
+			ts.Service.Ticket.Add(concert, 50)
+
+			email := "john@example.com"
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: 51, PaymentToken: validPaymentToken}
+			resp := orderTickets(t, ts, concert.Id, payload)
+			api := unmarshalOrder(t, resp.Body)
+
+			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusUnprocessableEntity)
+			ts.AssertResponseError(t, api.Error, &models.APIError{Message: models.ErrNotEnoughTickets.Error()})
+
+			if _, err := ts.Service.Order.FindByEmail(email); err != sql.ErrNoRows {
+				t.Fatalf("no order should be created; got %v", err)
+			}
+
+			count, err := ts.Service.Ticket.Remaining(concert)
+			if err != nil {
+				t.Fatalf("could not get remaining tickets; got %v", err)
+			}
+			if count != 50 {
+				t.Fatalf("want %d tickets remaining; got %d", 50, count)
+			}
+			// assert no charge was made
+			// assert 50 tickets still available
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
