@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -30,7 +29,7 @@ type TicketService interface {
 	Create(ticket *Ticket) error
 	BulkCreate(tickets *[]Ticket) error
 	// Uses ticketQuantity to create tickets for an order
-	CreateOrderTickets(order *Order, ticketQuantity uint64) (*[]Ticket, error)
+	OrderTickets(email string, concertId uint64, ticketQuantity uint64) (*Order, error)
 	// Uses ticketQuantity to generate tickets for a concert
 	Add(concert *Concert, ticketQuantity uint64) (*[]Ticket, error)
 	// returns the number of remaining tickets for concert
@@ -63,10 +62,6 @@ func (os *ticketService) FindByConcert(concertId uint64, limit int) (*[]Ticket, 
 	if err != nil {
 		return nil, err
 	}
-	if len(tickets) == 0 {
-		return nil, sql.ErrNoRows
-	}
-
 	return &tickets, err
 }
 
@@ -84,14 +79,22 @@ func (os *ticketService) BulkCreate(tickets *[]Ticket) error {
 	return err
 }
 
-func (os *ticketService) CreateOrderTickets(order *Order, ticketQuantity uint64) (*[]Ticket, error) {
-	tickets, err := os.FindByConcert(order.ConcertId, int(ticketQuantity))
+func (os *ticketService) OrderTickets(email string, concertId uint64, ticketQuantity uint64) (*Order, error) {
+	tickets, err := os.FindByConcert(concertId, int(ticketQuantity))
 	if err != nil {
 		return nil, err
 	}
+	if len(*tickets) != int(ticketQuantity) {
+		return nil, ErrNotEnoughTickets
+	}
 
-	for i := range *tickets {
+	order, err := createOrder(os.db, email, concertId)
+	if err != nil {
+		return nil, err
+	}
+	for i, ticket := range *tickets {
 		(*tickets)[i].OrderId = order.Id
+		order.Tickets = append(order.Tickets, &ticket)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -101,7 +104,7 @@ func (os *ticketService) CreateOrderTickets(order *Order, ticketQuantity uint64)
 		return nil, err
 	}
 
-	return tickets, nil
+	return order, nil
 }
 
 func (os *ticketService) Add(concert *Concert, ticketQuantity uint64) (*[]Ticket, error) {

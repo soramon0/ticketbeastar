@@ -104,14 +104,13 @@ func (c *Concerts) CreateConcertOrder(ctx *fiber.Ctx) error {
 		return &fiber.Error{Code: fiber.StatusBadRequest, Message: err.Error()}
 	}
 
-	order, err := c.order.Create(payload.Email, concert.Id)
+	order, err := c.ticket.OrderTickets(payload.Email, concert.Id, uint64(payload.TicketQuantity))
 	if err != nil {
-		c.log.Println("Failed to create order", err)
-		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
-	}
+		if err == models.ErrNotEnoughTickets {
+			return &fiber.Error{Code: fiber.StatusUnprocessableEntity, Message: err.Error()}
+		}
 
-	if _, err = c.ticket.CreateOrderTickets(order, uint64(payload.TicketQuantity)); err != nil {
-		c.log.Println("Failed to create tickets", err)
+		c.log.Println("Failed to create order", err)
 		return &fiber.Error{Code: fiber.StatusInternalServerError, Message: "internal server error"}
 	}
 

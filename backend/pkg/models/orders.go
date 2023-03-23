@@ -64,10 +64,14 @@ func (os *orderService) FindByEmail(email string) (*Order, error) {
 }
 
 func (os *orderService) Create(email string, concertId uint64) (*Order, error) {
+	return createOrder(os.db, email, concertId)
+}
+
+func createOrder(db *bun.DB, email string, concertId uint64) (*Order, error) {
 	order := &Order{Email: email, ConcertId: concertId}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	_, err := os.db.NewInsert().Model(order).Exec(ctx)
+	_, err := db.NewInsert().Model(order).Exec(ctx)
 	if err != nil {
 		return nil, err
 	}

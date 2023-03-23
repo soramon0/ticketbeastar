@@ -1,6 +1,7 @@
 package unit_test
 
 import (
+	"database/sql"
 	"testing"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
@@ -19,27 +20,33 @@ func TestTicketModel(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			email := "jane@example.com"
 			var ticketQuanity uint64 = 3
-			order, err := service.Order.Create(email, concert.Id)
-			if err != nil {
-				t.Fatalf("could not create order; got %v", err)
-			}
-			_, err = service.Ticket.Add(concert, ticketQuanity)
+			_, err := service.Ticket.Add(concert, ticketQuanity)
 			if err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
-			tickets, err := service.Ticket.CreateOrderTickets(order, ticketQuanity)
+
+			order, err := service.Ticket.OrderTickets(email, concert.Id, ticketQuanity)
 			if err != nil {
-				t.Fatalf("could not create order tickets; got %v", err)
+				t.Fatalf("could not order tickets; got %v", err)
 			}
 
-			if len(*tickets) != int(ticketQuanity) {
-				t.Fatalf("should have created %d tickets; got %d", ticketQuanity, len(*tickets))
+			count, err := service.Ticket.Remaining(concert)
+			if err != nil {
+				t.Fatalf("could not get remaining tickets; got %v", err)
+			}
+			if count != 0 {
+				t.Fatalf("want %d tickets; got %d", ticketQuanity, count)
 			}
 
-			for i, ticket := range *tickets {
-				if ticket.OrderId != order.Id {
-					t.Fatalf("ticket(%d) should have order id %d; got %d", i, order.Id, ticket.OrderId)
-				}
+			savedOrder, err := service.Order.FindByEmail(email)
+			if err != nil {
+				t.Fatalf("could not get order; %v", err)
+			}
+			if savedOrder.ConcertId != concert.Id {
+				t.Fatalf("want order.conertId %d; got %d", savedOrder.ConcertId, concert.Id)
+			}
+			if savedOrder.Id != order.Id {
+				t.Fatalf("want order %v; got order %v", savedOrder, order)
 			}
 		},
 		"can add tickets to a concert": func(t *testing.T, cs models.ConcertService) {
@@ -48,7 +55,7 @@ func TestTicketModel(t *testing.T) {
 
 			tickets, err := service.Ticket.Add(concert, ticketQuanity)
 			if err != nil {
-				t.Fatalf("could not create tickets; got %v", err)
+				t.Fatalf("could not add tickets; got %v", err)
 			}
 
 			if len(*tickets) != int(ticketQuanity) {
@@ -76,11 +83,8 @@ func TestTicketModel(t *testing.T) {
 			if err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
-			order, err := service.Order.Create("jane@example.com", concert.Id)
-			if err != nil {
-				t.Fatalf("could not create order; got %v", err)
-			}
-			_, err = service.Ticket.CreateOrderTickets(order, orderedTicket)
+
+			_, err = service.Ticket.OrderTickets("jane@example.com", concert.Id, orderedTicket)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
@@ -91,6 +95,31 @@ func TestTicketModel(t *testing.T) {
 			}
 			if count != ticketQuanity-orderedTicket {
 				t.Fatalf("want %d tickets remaining; got %d", ticketQuanity-orderedTicket, count)
+			}
+		},
+		"trying to purchase more tickets than remaining returns an error": func(t *testing.T, cs models.ConcertService) {
+			concert := tests.CreateConcert(t, db, nil, true)
+			var ticketQuanity uint64 = 2
+			email := "jane@example.com"
+			_, err := service.Ticket.Add(concert, ticketQuanity)
+			if err != nil {
+				t.Fatalf("could not create tickets; got %v", err)
+			}
+
+			_, err = service.Ticket.OrderTickets(email, concert.Id, ticketQuanity+1)
+			if err != models.ErrNotEnoughTickets {
+				t.Fatalf("want ErrNotEnoughTickets; got %v", err)
+			}
+
+			if order, err := service.Order.FindByEmail(email); err != sql.ErrNoRows {
+				t.Fatalf("order should be nil; got order(%v) err %v", order, err)
+			}
+			count, err := service.Ticket.Remaining(concert)
+			if err != nil {
+				t.Fatalf("could not get remaining tickets; got %v", err)
+			}
+			if count != ticketQuanity {
+				t.Fatalf("want %d tickets remaining; got %d", ticketQuanity, count)
 			}
 		},
 	}
