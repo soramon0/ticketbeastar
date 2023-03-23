@@ -58,7 +58,7 @@ func (os *ticketService) FindByConcert(concertId uint64, limit int) (*[]Ticket, 
 	tickets := []Ticket{}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := os.db.NewSelect().Model(&tickets).Where("concert_id = ?", concertId).Limit(limit).Scan(ctx)
+	err := os.db.NewSelect().Model(&tickets).Where("concert_id = ?", concertId).Where("order_id IS NULL").Limit(limit).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}

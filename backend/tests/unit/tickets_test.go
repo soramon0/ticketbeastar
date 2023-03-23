@@ -122,6 +122,34 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("want %d tickets remaining; got %d", ticketQuanity, count)
 			}
 		},
+		"cannot order tickets that have already been purchased": func(t *testing.T, cs models.ConcertService) {
+			concert := tests.CreateConcert(t, db, nil, true)
+			var ticketQuanity uint64 = 10
+			_, err := service.Ticket.Add(concert, ticketQuanity)
+			if err != nil {
+				t.Fatalf("could not create tickets; got %v", err)
+			}
+
+			_, err = service.Ticket.OrderTickets("jane@example.com", concert.Id, 8)
+			if err != nil {
+				t.Fatalf("could not order tickets; got %v", err)
+			}
+			_, err = service.Ticket.OrderTickets("micky@example.com", concert.Id, 3)
+			if err != models.ErrNotEnoughTickets {
+				t.Fatalf("want ErrNotEnoughTickets; got %v", err)
+			}
+
+			if mickeysOrder, err := service.Order.FindByEmail("micky@example.com"); err != sql.ErrNoRows {
+				t.Fatalf("order should be nil; got order(%v) err %v", mickeysOrder, err)
+			}
+			count, err := service.Ticket.Remaining(concert)
+			if err != nil {
+				t.Fatalf("could not get remaining tickets; got %v", err)
+			}
+			if count != 2 {
+				t.Fatalf("want %d tickets remaining; got %d", 2, count)
+			}
+		},
 	}
 
 	for name, tc := range testCases {
