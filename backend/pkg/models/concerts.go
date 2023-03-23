@@ -25,7 +25,8 @@ type Concert struct {
 	CreatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt             time.Time    `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 
-	Orders []*Order `bun:"rel:has-many,join:id=concert_id" json:"orders,omitempty"`
+	Orders  []*Order  `bun:"rel:has-many,join:id=concert_id" json:"orders,omitempty"`
+	Tickets []*Ticket `bun:"rel:has-many,join:id=concert_id" json:"tickets,omitempty"`
 }
 
 type ConcertService interface {

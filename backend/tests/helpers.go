@@ -109,7 +109,7 @@ func (ts *TestServer) AssertResponseCount(t *testing.T, gotCount, wantCount int)
 func SetupConcertTable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewCreateTable().Model((*models.Concert)(nil)).Exec(context.Background())
+	_, err := db.NewCreateTable().Model((*models.Concert)(nil)).IfNotExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("SetupConcertTable() err %v; want nil", err)
 	}
@@ -127,7 +127,7 @@ func TeardownConcertTable(t *testing.T, db *bun.DB) {
 func SetupOrderTable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewCreateTable().Model((*models.Order)(nil)).Exec(context.Background())
+	_, err := db.NewCreateTable().Model((*models.Order)(nil)).IfNotExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("SetupOrderTable() err %v; want nil", err)
 	}
@@ -145,7 +145,7 @@ func TeardownOrderTable(t *testing.T, db *bun.DB) {
 func SetupTicketable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewCreateTable().Model((*models.Ticket)(nil)).Exec(context.Background())
+	_, err := db.NewCreateTable().Model((*models.Ticket)(nil)).IfNotExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("SetupTicketTable() err %v; want nil", err)
 	}

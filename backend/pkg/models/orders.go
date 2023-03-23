@@ -15,7 +15,7 @@ type Order struct {
 	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
 	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 
-	ConcertId uint64    `json:"concert_id"`
+	ConcertId uint64    `bun:",notnull" json:"concert_id"`
 	Tickets   []*Ticket `bun:"rel:has-many,join:id=order_id" json:"tickets"`
 }
 
