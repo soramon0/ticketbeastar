@@ -10,10 +10,12 @@ import (
 type Order struct {
 	bun.BaseModel `bun:"table:orders,alias:o"`
 
-	Id        uint64    `bun:"id,pk,autoincrement" json:"id"`
-	Email     string    `bun:"email,notnull" json:"email"`
-	CreatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
-	UpdatedAt time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
+	Id             uint64    `bun:"id,pk,autoincrement" json:"id"`
+	Email          string    `bun:"email,notnull" json:"email"`
+	TicketQuantity uint64    `bun:"ticket_quantity,notnull" json:"ticket_quantity"`
+	Amount         uint64    `bun:"amount,notnull" json:"amount"`
+	CreatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"created_at"`
+	UpdatedAt      time.Time `bun:",nullzero,notnull,default:current_timestamp" json:"updated_at"`
 
 	ConcertId uint64    `bun:",notnull" json:"concert_id"`
 	Tickets   []*Ticket `bun:"rel:has-many,join:id=order_id" json:"tickets"`
@@ -26,7 +28,7 @@ type OrderService interface {
 	FindByEmail(email string) (*Order, error)
 
 	// Creates a concert order for the given user email
-	Create(email string, concertId uint64) (*Order, error)
+	Create(concert *Concert, email string, ticketQuantity uint64) (*Order, error)
 	// Will release all tickets for the order and then delete the order
 	Cancel(orderId uint64) error
 	// Deletes the order with the given id
@@ -67,12 +69,13 @@ func (os *orderService) FindByEmail(email string) (*Order, error) {
 	return &order, err
 }
 
-func (os *orderService) Create(email string, concertId uint64) (*Order, error) {
-	return createOrder(os.db, email, concertId)
+func (os *orderService) Create(concert *Concert, email string, ticketQuantity uint64) (*Order, error) {
+	return createOrder(os.db, concert, email, ticketQuantity)
 }
 
-func createOrder(db *bun.DB, email string, concertId uint64) (*Order, error) {
-	order := &Order{Email: email, ConcertId: concertId}
+func createOrder(db *bun.DB, concert *Concert, email string, ticketQuantity uint64) (*Order, error) {
+	amount := concert.TicketPrice * ticketQuantity
+	order := &Order{ConcertId: concert.Id, Email: email, Amount: amount, TicketQuantity: ticketQuantity}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	_, err := db.NewInsert().Model(order).Exec(ctx)

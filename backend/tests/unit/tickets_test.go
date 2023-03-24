@@ -25,7 +25,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
 
-			order, err := service.Ticket.OrderTickets(email, concert.Id, ticketQuanity)
+			order, err := service.Ticket.OrderTickets(concert, email, ticketQuanity)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
@@ -84,7 +84,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
 
-			_, err = service.Ticket.OrderTickets("jane@example.com", concert.Id, orderedTicket)
+			_, err = service.Ticket.OrderTickets(concert, "jane@example.com", orderedTicket)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
@@ -106,7 +106,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
 
-			_, err = service.Ticket.OrderTickets(email, concert.Id, ticketQuanity+1)
+			_, err = service.Ticket.OrderTickets(concert, email, ticketQuanity+1)
 			if err != models.ErrNotEnoughTickets {
 				t.Fatalf("want ErrNotEnoughTickets; got %v", err)
 			}
@@ -130,11 +130,11 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
 
-			_, err = service.Ticket.OrderTickets("jane@example.com", concert.Id, 8)
+			_, err = service.Ticket.OrderTickets(concert, "jane@example.com", 8)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
-			_, err = service.Ticket.OrderTickets("micky@example.com", concert.Id, 3)
+			_, err = service.Ticket.OrderTickets(concert, "micky@example.com", 3)
 			if err != models.ErrNotEnoughTickets {
 				t.Fatalf("want ErrNotEnoughTickets; got %v", err)
 			}
@@ -155,7 +155,7 @@ func TestTicketModel(t *testing.T) {
 			if _, err := service.Ticket.Add(concert, 1); err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
-			order, err := service.Ticket.OrderTickets("jane@example.com", concert.Id, 1)
+			order, err := service.Ticket.OrderTickets(concert, "jane@example.com", 1)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}

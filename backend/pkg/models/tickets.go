@@ -29,7 +29,7 @@ type TicketService interface {
 	Create(ticket *Ticket) error
 	BulkCreate(tickets *[]Ticket) error
 	// Uses ticketQuantity to create tickets for an order
-	OrderTickets(email string, concertId uint64, ticketQuantity uint64) (*Order, error)
+	OrderTickets(concert *Concert, email string, ticketQuantity uint64) (*Order, error)
 	// Uses ticketQuantity to generate tickets for a concert
 	Add(concert *Concert, ticketQuantity uint64) (*[]Ticket, error)
 	// Releases all tickets for an order
@@ -102,8 +102,8 @@ func (os *ticketService) BulkCreate(tickets *[]Ticket) error {
 	return err
 }
 
-func (os *ticketService) OrderTickets(email string, concertId uint64, ticketQuantity uint64) (*Order, error) {
-	tickets, err := os.FindByConcert(concertId, int(ticketQuantity))
+func (os *ticketService) OrderTickets(concert *Concert, email string, ticketQuantity uint64) (*Order, error) {
+	tickets, err := os.FindByConcert(concert.Id, int(ticketQuantity))
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,7 @@ func (os *ticketService) OrderTickets(email string, concertId uint64, ticketQuan
 		return nil, ErrNotEnoughTickets
 	}
 
-	order, err := createOrder(os.db, email, concertId)
+	order, err := createOrder(os.db, concert, email, ticketQuantity)
 	if err != nil {
 		return nil, err
 	}

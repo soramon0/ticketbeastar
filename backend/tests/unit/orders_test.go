@@ -21,7 +21,7 @@ func TestOrderModel(t *testing.T) {
 			if _, err := service.Ticket.Add(concert, 10); err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
-			order, err := service.Ticket.OrderTickets("jane@example.com", concert.Id, 5)
+			order, err := service.Ticket.OrderTickets(concert, "jane@example.com", 5)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
