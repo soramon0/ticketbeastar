@@ -27,6 +27,8 @@ type OrderService interface {
 
 	// Methods for altering orders
 	Create(email string, concertId uint64) (*Order, error)
+	Cancel(orderId uint64) error
+	Delete(orderId uint64) error
 }
 
 type orderService struct {
@@ -76,4 +78,21 @@ func createOrder(db *bun.DB, email string, concertId uint64) (*Order, error) {
 		return nil, err
 	}
 	return order, nil
+}
+
+func (os *orderService) Cancel(orderId uint64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := os.db.NewUpdate().Table("tickets").Set("order_id = NULL").Where("order_id = ?", orderId).Exec(ctx)
+	if err != nil {
+		return err
+	}
+	return os.Delete(orderId)
+}
+
+func (os *orderService) Delete(orderId uint64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := os.db.NewDelete().Model((*Order)(nil)).Where("id = ?", orderId).Exec(ctx)
+	return err
 }
