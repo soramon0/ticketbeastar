@@ -1,6 +1,7 @@
 - model: Concert
   rows:
-    - title: "The Red Chord"
+    - _id: theRedChord
+      title: "The Red Chord"
       subtitle: "with Animosity and Lethargy"
       date: "{{ now }}"
       published_at: "{{ now }}"
@@ -11,7 +12,8 @@
       state: "On"
       zip: "17916"
       additional_information: "For tickets, call (555) 555-5555"
-    - title: "The Burning Man"
+    - _id: theBurningMan
+      title: "The Burning Man"
       subtitle: "here and now"
       date: "{{ now }}"
       published_at: null
@@ -22,3 +24,11 @@
       state: "On"
       zip: "17916"
       additional_information: "For tickets, call (555) 555-5555"
+
+- model: Ticket
+  rows:
+    - concert_id: "{{ $.Concert.theRedChord.Id }}"
+    - concert_id: "{{ $.Concert.theRedChord.Id }}"
+    - concert_id: "{{ $.Concert.theRedChord.Id }}"
+    - concert_id: "{{ $.Concert.theRedChord.Id }}"
+    - concert_id: "{{ $.Concert.theRedChord.Id }}"
