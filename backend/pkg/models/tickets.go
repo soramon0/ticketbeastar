@@ -32,6 +32,8 @@ type TicketService interface {
 	OrderTickets(email string, concertId uint64, ticketQuantity uint64) (*Order, error)
 	// Uses ticketQuantity to generate tickets for a concert
 	Add(concert *Concert, ticketQuantity uint64) (*[]Ticket, error)
+	// Releases all tickets for an order
+	Release(orderId uint64) error
 	// returns the number of remaining tickets for concert
 	Remaining(concert *Concert) (uint64, error)
 }
@@ -118,6 +120,17 @@ func (os *ticketService) Add(concert *Concert, ticketQuantity uint64) (*[]Ticket
 		return nil, err
 	}
 	return &tickets, nil
+}
+
+func (os *ticketService) Release(orderId uint64) error {
+	return releaseTickets(os.db, orderId)
+}
+
+func releaseTickets(db *bun.DB, orderId uint64) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err := db.NewUpdate().Table("tickets").Set("order_id = NULL").Where("order_id = ?", orderId).Exec(ctx)
+	return err
 }
 
 func (os *ticketService) Remaining(concert *Concert) (uint64, error) {

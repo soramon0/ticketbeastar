@@ -25,9 +25,11 @@ type OrderService interface {
 	FindById(id uint64) (*Order, error)
 	FindByEmail(email string) (*Order, error)
 
-	// Methods for altering orders
+	// Creates a concert order for the given user email
 	Create(email string, concertId uint64) (*Order, error)
+	// Will release all tickets for the order and then delete the order
 	Cancel(orderId uint64) error
+	// Deletes the order with the given id
 	Delete(orderId uint64) error
 }
 
@@ -81,10 +83,7 @@ func createOrder(db *bun.DB, email string, concertId uint64) (*Order, error) {
 }
 
 func (os *orderService) Cancel(orderId uint64) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	_, err := os.db.NewUpdate().Table("tickets").Set("order_id = NULL").Where("order_id = ?", orderId).Exec(ctx)
-	if err != nil {
+	if err := releaseTickets(os.db, orderId); err != nil {
 		return err
 	}
 	return os.Delete(orderId)
