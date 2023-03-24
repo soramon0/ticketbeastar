@@ -118,7 +118,7 @@ func SetupConcertTable(t *testing.T, db *bun.DB) {
 func TeardownConcertTable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewDropTable().Model((*models.Concert)(nil)).Exec(context.Background())
+	_, err := db.NewDropTable().Model((*models.Concert)(nil)).IfExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop concerts table err %v; want nil", err)
 	}
@@ -136,7 +136,7 @@ func SetupOrderTable(t *testing.T, db *bun.DB) {
 func TeardownOrderTable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewDropTable().Model((*models.Order)(nil)).Exec(context.Background())
+	_, err := db.NewDropTable().Model((*models.Order)(nil)).IfExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop orders table err %v; want nil", err)
 	}
@@ -154,7 +154,7 @@ func SetupTicketable(t *testing.T, db *bun.DB) {
 func TeardownTicketTable(t *testing.T, db *bun.DB) {
 	t.Helper()
 
-	_, err := db.NewDropTable().Model((*models.Ticket)(nil)).Exec(context.Background())
+	_, err := db.NewDropTable().Model((*models.Ticket)(nil)).IfExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop tickets table err %v; want nil", err)
 	}
@@ -241,7 +241,7 @@ func SetupUserTable(t *testing.T, db *bun.DB) {
 }
 
 func TeardownUserTable(t *testing.T, db *bun.DB) {
-	_, err := db.NewDropTable().Model((*models.User)(nil)).Exec(context.Background())
+	_, err := db.NewDropTable().Model((*models.User)(nil)).IfExists().Exec(context.Background())
 	if err != nil {
 		t.Fatalf("Drop users table err %v; want nil", err)
 	}
