@@ -28,10 +28,11 @@ func TestPurchaseTickets(t *testing.T) {
 		"customer can purchase tickets to a published concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{TicketPrice: 3250, PublishedAt: schema.NullTime{Time: time.Now()}}, true)
 			email := "john@example.com"
-			ticketQuantity := 3
-			ts.Service.Ticket.Add(concert, uint64(ticketQuantity))
-			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: ticketQuantity, PaymentToken: validPaymentToken}
+			var ticketQuantity uint64 = 3
+			ts.Service.Ticket.Add(concert, ticketQuantity)
+			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: int(ticketQuantity), PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
+			api := unmarshalOrder(t, resp.Body)
 
 			ts.AssertResponseStatus(t, resp.StatusCode, fiber.StatusCreated)
 
@@ -47,7 +48,7 @@ func TestPurchaseTickets(t *testing.T) {
 			if err != nil {
 				t.Fatalf("tickets should not be %v; %v", order, err)
 			}
-			if len(*tickets) != ticketQuantity {
+			if len(*tickets) != int(ticketQuantity) {
 				t.Fatalf("should have created %d tickets; got %d", ticketQuantity, len(*tickets))
 			}
 			for i, ticket := range *tickets {
@@ -55,7 +56,9 @@ func TestPurchaseTickets(t *testing.T) {
 					t.Fatalf("ticket(%d) should have order id %d; got %d", i, order.Id, ticket.OrderId)
 				}
 			}
-			// assert total price is ticket * quantity
+
+			ts.AssertResponseError(t, api.Error, nil)
+			assertOrder(t, api.Data, email, ticketQuantity, 3250*ticketQuantity)
 		},
 		"customer cannot purchase tickets to an unpublished concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
@@ -243,4 +246,16 @@ func unmarshalOrder(t *testing.T, body io.ReadCloser) models.APIResponse[*models
 		t.Fatalf("could not unmarshal concerts response body; err %v", err)
 	}
 	return resp
+}
+
+func assertOrder(t *testing.T, order *models.Order, email string, ticketQuantity uint64, amount uint64) {
+	if order.Email != email {
+		t.Fatalf("want email %s, got %s", email, order.Email)
+	}
+	if order.TicketQuantity != ticketQuantity {
+		t.Fatalf("want ticketQuantity %d, got %d", ticketQuantity, order.TicketQuantity)
+	}
+	if order.Amount != amount {
+		t.Fatalf("want amount %d, got %d", amount, order.Amount)
+	}
 }

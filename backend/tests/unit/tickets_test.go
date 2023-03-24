@@ -19,13 +19,13 @@ func TestTicketModel(t *testing.T) {
 		"can order concert tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			email := "jane@example.com"
-			var ticketQuanity uint64 = 3
-			_, err := service.Ticket.Add(concert, ticketQuanity)
+			var ticketQuantity uint64 = 3
+			_, err := service.Ticket.Add(concert, ticketQuantity)
 			if err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
 
-			order, err := service.Ticket.OrderTickets(concert, email, ticketQuanity)
+			order, err := service.Ticket.OrderTickets(concert, email, ticketQuantity)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
@@ -35,7 +35,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("could not get remaining tickets; got %v", err)
 			}
 			if count != 0 {
-				t.Fatalf("want %d tickets; got %d", ticketQuanity, count)
+				t.Fatalf("want %d tickets; got %d", ticketQuantity, count)
 			}
 
 			savedOrder, err := service.Order.FindByEmail(email)
@@ -47,6 +47,12 @@ func TestTicketModel(t *testing.T) {
 			}
 			if savedOrder.Id != order.Id {
 				t.Fatalf("want order %v; got order %v", savedOrder, order)
+			}
+			if savedOrder.Amount != concert.TicketPrice*ticketQuantity {
+				t.Fatalf("want amount %d; got %d", concert.TicketPrice*ticketQuantity, savedOrder.Amount)
+			}
+			if savedOrder.TicketQuantity != ticketQuantity {
+				t.Fatalf("want ticketQuantity %d; got %d", savedOrder.Amount, ticketQuantity)
 			}
 		},
 		"can add tickets to a concert": func(t *testing.T) {
