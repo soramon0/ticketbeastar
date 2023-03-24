@@ -79,13 +79,17 @@ func (os *ticketService) FindByConcert(concertId uint64, limit int) (*[]Ticket, 
 
 func (os *ticketService) FindByOrder(orderId uint64, limit int) (*[]Ticket, error) {
 	tickets := []Ticket{}
+	query := os.db.NewSelect().Model(&tickets).Where("order_id = ?", orderId)
+	if limit > 0 {
+		query.Limit(limit)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := os.db.NewSelect().Model(&tickets).Where("order_id = ?", orderId).Limit(limit).Scan(ctx)
-	if err != nil {
+	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
-	return &tickets, err
+	return &tickets, nil
 }
 
 func (os *ticketService) Create(ticket *Ticket) error {
