@@ -69,8 +69,8 @@ func TestConcertsListing(t *testing.T) {
 
 	for name, tc := range testsCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupConcertTable(t, ts.Db)
 			defer tests.TeardownConcertTable(t, ts.Db)
+			tests.SetupConcertTable(t, ts.Db)
 			tc(t)
 		})
 	}

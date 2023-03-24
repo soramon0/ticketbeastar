@@ -199,14 +199,14 @@ func TestPurchaseTickets(t *testing.T) {
 
 	for name, tc := range testsCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupConcertTable(t, ts.Db)
-			tests.SetupOrderTable(t, ts.Db)
-			tests.SetupTicketable(t, ts.Db)
 			defer func() {
 				tests.TeardownTicketTable(t, ts.Db)
 				tests.TeardownOrderTable(t, ts.Db)
 				tests.TeardownConcertTable(t, ts.Db)
 			}()
+			tests.SetupConcertTable(t, ts.Db)
+			tests.SetupOrderTable(t, ts.Db)
+			tests.SetupTicketable(t, ts.Db)
 			tc(t)
 		})
 	}

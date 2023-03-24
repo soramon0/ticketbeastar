@@ -15,8 +15,8 @@ func TestTicketModel(t *testing.T) {
 
 	service := models.NewServices(db)
 
-	testCases := map[string]func(t *testing.T, cs models.ConcertService){
-		"can order concert tickets": func(t *testing.T, cs models.ConcertService) {
+	testCases := map[string]func(t *testing.T){
+		"can order concert tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			email := "jane@example.com"
 			var ticketQuanity uint64 = 3
@@ -49,7 +49,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("want order %v; got order %v", savedOrder, order)
 			}
 		},
-		"can add tickets to a concert": func(t *testing.T, cs models.ConcertService) {
+		"can add tickets to a concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			var ticketQuanity uint64 = 50
 
@@ -75,7 +75,7 @@ func TestTicketModel(t *testing.T) {
 				}
 			}
 		},
-		"tickets remaining does not include tickets associated with an order": func(t *testing.T, cs models.ConcertService) {
+		"tickets remaining does not include tickets associated with an order": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			var ticketQuanity uint64 = 50
 			var orderedTicket uint64 = 30
@@ -97,7 +97,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("want %d tickets remaining; got %d", ticketQuanity-orderedTicket, count)
 			}
 		},
-		"trying to purchase more tickets than remaining returns an error": func(t *testing.T, cs models.ConcertService) {
+		"trying to purchase more tickets than remaining returns an error": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			var ticketQuanity uint64 = 2
 			email := "jane@example.com"
@@ -122,7 +122,7 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("want %d tickets remaining; got %d", ticketQuanity, count)
 			}
 		},
-		"cannot order tickets that have already been purchased": func(t *testing.T, cs models.ConcertService) {
+		"cannot order tickets that have already been purchased": func(t *testing.T) {
 			concert := tests.CreateConcert(t, db, nil, true)
 			var ticketQuanity uint64 = 10
 			_, err := service.Ticket.Add(concert, ticketQuanity)
@@ -154,16 +154,16 @@ func TestTicketModel(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupConcertTable(t, db)
-			tests.SetupOrderTable(t, db)
-			tests.SetupTicketable(t, db)
 			defer func() {
 				tests.TeardownTicketTable(t, db)
 				tests.TeardownOrderTable(t, db)
 				tests.TeardownConcertTable(t, db)
 			}()
+			tests.SetupConcertTable(t, db)
+			tests.SetupOrderTable(t, db)
+			tests.SetupTicketable(t, db)
 
-			tc(t, models.NewConcertService(db))
+			tc(t)
 		})
 	}
 }

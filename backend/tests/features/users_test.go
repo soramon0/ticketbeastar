@@ -35,8 +35,8 @@ func TestUsersController(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupUserTable(t, ts.Db)
 			defer tests.TeardownUserTable(t, ts.Db)
+			tests.SetupUserTable(t, ts.Db)
 			tc(t)
 		})
 	}

@@ -52,14 +52,14 @@ func TestOrderModel(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupConcertTable(t, db)
-			tests.SetupOrderTable(t, db)
-			tests.SetupTicketable(t, db)
 			defer func() {
 				tests.TeardownTicketTable(t, db)
 				tests.TeardownOrderTable(t, db)
 				tests.TeardownConcertTable(t, db)
 			}()
+			tests.SetupConcertTable(t, db)
+			tests.SetupOrderTable(t, db)
+			tests.SetupTicketable(t, db)
 
 			tc(t, models.NewConcertService(db))
 		})

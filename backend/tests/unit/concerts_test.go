@@ -43,8 +43,8 @@ func TestConcertModel(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			tests.SetupConcertTable(t, db)
 			defer tests.TeardownConcertTable(t, db)
+			tests.SetupConcertTable(t, db)
 			tc(t, models.NewConcertService(db))
 		})
 	}
