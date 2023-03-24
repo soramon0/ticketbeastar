@@ -11,11 +11,11 @@ import (
 
 func init() {
 	Migrations.MustRegister(func(ctx context.Context, db *bun.DB) error {
-		fmt.Print(" [up migration] ")
+		fmt.Print("tickets [up migration] ")
 		_, err := db.NewCreateTable().Model((*models.Ticket)(nil)).IfNotExists().Exec(ctx)
 		return err
 	}, func(ctx context.Context, db *bun.DB) error {
-		fmt.Print(" [down migration] ")
+		fmt.Print("tickets [down migration] ")
 		_, err := db.NewDropTable().Model((*models.Ticket)(nil)).IfExists().Exec(ctx)
 		return err
 	})
