@@ -59,6 +59,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"customer cannot purchase tickets to an unpublished concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
+			ts.Service.Ticket.Add(concert, 3)
 			email := "john@example.com"
 			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: 1, PaymentToken: validPaymentToken}
 			resp := orderTickets(t, ts, concert.Id, payload)
@@ -97,7 +98,6 @@ func TestPurchaseTickets(t *testing.T) {
 				t.Fatalf("want %d tickets remaining; got %d", 50, count)
 			}
 			// assert no charge was made
-			// assert 50 tickets still available
 		},
 		"email is required to purchase tickets": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
@@ -181,6 +181,7 @@ func TestPurchaseTickets(t *testing.T) {
 		},
 		"an order is not created if payment fails": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, nil, true)
+			ts.Service.Ticket.Add(concert, 1)
 			email := "jon@example.com"
 			payload := controllers.CreateConcertOrderPayload{Email: email, TicketQuantity: 1, PaymentToken: "invalid payment token"}
 			resp := orderTickets(t, ts, concert.Id, payload)
