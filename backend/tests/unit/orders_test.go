@@ -18,12 +18,10 @@ func TestOrderModel(t *testing.T) {
 	testCases := map[string]func(t *testing.T, cs models.ConcertService){
 		"tickets are released when an order is cancelled": func(t *testing.T, cs models.ConcertService) {
 			concert := tests.CreateConcert(t, db, nil, true)
-			email := "jane@example.com"
-			_, err := service.Ticket.Add(concert, 10)
-			if err != nil {
+			if _, err := service.Ticket.Add(concert, 10); err != nil {
 				t.Fatalf("could not create tickets; got %v", err)
 			}
-			order, err := service.Ticket.OrderTickets(email, concert.Id, 5)
+			order, err := service.Ticket.OrderTickets("jane@example.com", concert.Id, 5)
 			if err != nil {
 				t.Fatalf("could not order tickets; got %v", err)
 			}
@@ -46,7 +44,7 @@ func TestOrderModel(t *testing.T) {
 			if count != 10 {
 				t.Fatalf("want %d tickets remaining; got %d", 5, count)
 			}
-			if order, err := service.Order.FindByEmail(email); err != sql.ErrNoRows {
+			if order, err := service.Order.FindById(order.Id); err != sql.ErrNoRows {
 				t.Fatalf("order should be nil; got order(%v) err %v", order, err)
 			}
 		},
