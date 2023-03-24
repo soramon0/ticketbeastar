@@ -11,7 +11,7 @@ import (
 )
 
 func TestConcertModel(t *testing.T) {
-	db := database.OpenConnection(utils.GetTestDatabaseURL(), utils.InitLogger())
+	db := database.OpenConnection(utils.GetTestDatabaseURL(), false, utils.InitLogger())
 	defer database.CloseConnection(db)
 
 	testCases := map[string]func(t *testing.T, cs models.ConcertService){

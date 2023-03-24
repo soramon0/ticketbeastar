@@ -10,7 +10,7 @@ import (
 )
 
 func TestTicketModel(t *testing.T) {
-	db := database.OpenConnection(utils.GetTestDatabaseURL(), utils.InitLogger())
+	db := database.OpenConnection(utils.GetTestDatabaseURL(), false, utils.InitLogger())
 	defer database.CloseConnection(db)
 
 	service := models.NewServices(db)

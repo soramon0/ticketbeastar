@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"ticketbeastar/pkg/configs"
 	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
@@ -12,8 +13,12 @@ import (
 )
 
 func main() {
+	var verboseDb bool
+	flag.BoolVar(&verboseDb, "db-verbose", false, "Used to enable db verbose logs")
+	flag.Parse()
+
 	logger := utils.InitLogger()
-	db := database.OpenConnection(utils.GetDatabaseURL(), logger)
+	db := database.OpenConnection(utils.GetDatabaseURL(), verboseDb, logger)
 	defer database.CloseConnection(db)
 
 	app := fiber.New(configs.FiberConfig())

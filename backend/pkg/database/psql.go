@@ -14,11 +14,11 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func OpenConnection(dsn string, l *log.Logger) *bun.DB {
+func OpenConnection(dsn string, verbose bool, l *log.Logger) *bun.DB {
 	sqldb := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
 	db := bun.NewDB(sqldb, pgdialect.New())
 
-	if utils.GetStageStatus() == "dev" {
+	if verbose {
 		db.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(true)))
 	}
 

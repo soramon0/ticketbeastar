@@ -36,7 +36,7 @@ func NewTestServer(t *testing.T) *TestServer {
 		t.Fatal(err)
 	}
 	app := fiber.New(configs.FiberConfig())
-	db := database.OpenConnection(utils.GetTestDatabaseURL(), logger)
+	db := database.OpenConnection(utils.GetTestDatabaseURL(), false, logger)
 	services := models.NewServices(db)
 	routes.Register(app, services, validate, logger)
 
