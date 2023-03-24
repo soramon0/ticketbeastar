@@ -21,9 +21,9 @@ type Ticket struct {
 type TicketService interface {
 	// Methods for querying tickets
 	Find() (*[]Ticket, error)
+	FindById(id uint64) (*Ticket, error)
 	FindByConcert(concertId uint64, limit int) (*[]Ticket, error)
-	// FindById(id uint64) (*Ticket, error)
-	// FindByEmail(email string) (*Ticket, error)
+	FindByOrder(orderId uint64, limit int) (*[]Ticket, error)
 
 	// Methods for altering tickets
 	Create(ticket *Ticket) error
@@ -56,11 +56,32 @@ func (os *ticketService) Find() (*[]Ticket, error) {
 	return &tickets, err
 }
 
+func (os *ticketService) FindById(id uint64) (*Ticket, error) {
+	var ticket Ticket
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := os.db.NewSelect().Model(&ticket).Where("id = ?", id).Scan(ctx); err != nil {
+		return nil, err
+	}
+	return &ticket, nil
+}
+
 func (os *ticketService) FindByConcert(concertId uint64, limit int) (*[]Ticket, error) {
 	tickets := []Ticket{}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	err := os.db.NewSelect().Model(&tickets).Where("concert_id = ?", concertId).Where("order_id IS NULL").Limit(limit).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &tickets, err
+}
+
+func (os *ticketService) FindByOrder(orderId uint64, limit int) (*[]Ticket, error) {
+	tickets := []Ticket{}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err := os.db.NewSelect().Model(&tickets).Where("order_id = ?", orderId).Limit(limit).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}

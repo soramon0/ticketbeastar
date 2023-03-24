@@ -150,6 +150,37 @@ func TestTicketModel(t *testing.T) {
 				t.Fatalf("want %d tickets remaining; got %d", 2, count)
 			}
 		},
+		"a ticket can be released": func(t *testing.T) {
+			concert := tests.CreateConcert(t, db, nil, true)
+			if _, err := service.Ticket.Add(concert, 1); err != nil {
+				t.Fatalf("could not create tickets; got %v", err)
+			}
+			order, err := service.Ticket.OrderTickets("jane@example.com", concert.Id, 1)
+			if err != nil {
+				t.Fatalf("could not order tickets; got %v", err)
+			}
+			tickets, err := service.Ticket.FindByOrder(order.Id, 1)
+			if err != nil {
+				t.Fatalf("failed to fetch order tickets; %v", err)
+			}
+			if len(*tickets) != 1 {
+				t.Fatalf("want %d ticket; got %d", 1, len(*tickets))
+			}
+			ticket := (*tickets)[0]
+			if ticket.OrderId != order.Id {
+				t.Fatalf("want ticket.orderId %d; %d", order.Id, ticket.OrderId)
+			}
+
+			service.Ticket.Release(order.Id)
+
+			releasedTicket, err := service.Ticket.FindById(ticket.Id)
+			if err != nil {
+				t.Fatalf("failed to fetch ticket; %v", err)
+			}
+			if releasedTicket.OrderId != 0 {
+				t.Fatalf("ticket should not have order id; got %d", releasedTicket.OrderId)
+			}
+		},
 	}
 
 	for name, tc := range testCases {
