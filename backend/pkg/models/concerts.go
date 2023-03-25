@@ -35,6 +35,8 @@ type ConcertService interface {
 	FindPublished() (*[]Concert, error)
 	FindById(id string) (*Concert, error)
 	FindPublishedById(id string) (*Concert, error)
+	FindTickets(concertId uint64, ticketQuantity uint64) (*[]Ticket, error)
+	CreateOrder(email string, concert *Concert, tickets *[]Ticket) (*Order, error)
 
 	// Methods for altering concerts
 	Create(concert *Concert) error
@@ -94,6 +96,36 @@ func (cs *concertService) FindPublishedById(id string) (*Concert, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return &concert, query.Scan(ctx)
+}
+
+func (cs *concertService) FindTickets(concertId uint64, ticketQuantity uint64) (*[]Ticket, error) {
+	tickets, err := findTicketsForConcert(cs.db, concertId, int(ticketQuantity))
+
+	if len(*tickets) < int(ticketQuantity) {
+		return nil, ErrNotEnoughTickets
+	}
+
+	return tickets, err
+}
+
+func (cs *concertService) CreateOrder(email string, concert *Concert, tickets *[]Ticket) (*Order, error) {
+	order, err := createOrder(cs.db, concert, email, uint64(len(*tickets)))
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range *tickets {
+		(*tickets)[i].OrderId = order.Id
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err = cs.db.NewUpdate().Model(tickets).Column("order_id").Bulk().Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
 }
 
 func (cs *concertService) Create(concert *Concert) error {

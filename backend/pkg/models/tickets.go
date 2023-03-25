@@ -67,14 +67,23 @@ func (os *ticketService) FindById(id uint64) (*Ticket, error) {
 }
 
 func (os *ticketService) FindByConcert(concertId uint64, limit int) (*[]Ticket, error) {
+	return findTicketsForConcert(os.db, concertId, limit)
+}
+
+func findTicketsForConcert(db *bun.DB, concertId uint64, limit int) (*[]Ticket, error) {
 	tickets := []Ticket{}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	err := os.db.NewSelect().Model(&tickets).Where("concert_id = ?", concertId).Where("order_id IS NULL").Limit(limit).Scan(ctx)
-	if err != nil {
+	query := db.NewSelect().Model(&tickets).Where("concert_id = ?", concertId).Where("order_id IS NULL")
+
+	if limit > 0 {
+		query.Limit(limit)
+	}
+
+	if err := query.Scan(ctx); err != nil {
 		return nil, err
 	}
-	return &tickets, err
+	return &tickets, nil
 }
 
 func (os *ticketService) FindByOrder(orderId uint64, limit int) (*[]Ticket, error) {
