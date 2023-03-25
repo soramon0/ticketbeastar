@@ -3,7 +3,6 @@ package features_test
 import (
 	"fmt"
 	"testing"
-	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
 	"time"
@@ -14,7 +13,7 @@ import (
 
 func TestConcertsListing(t *testing.T) {
 	ts := tests.NewTestServer(t)
-	defer database.CloseConnection(ts.Db)
+	defer ts.CloseConnection(t)
 
 	testsCases := map[string]func(t *testing.T){
 		"can view single published concert": func(t *testing.T) {

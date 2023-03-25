@@ -48,6 +48,14 @@ func NewTestServer(t *testing.T) *TestServer {
 	}
 }
 
+func (ts *TestServer) CloseConnection(t *testing.T) {
+	t.Helper()
+
+	if err := database.CloseConnection(ts.Db); err != nil {
+		t.Fatalf("failed to close database connection; %v", err)
+	}
+}
+
 func (ts *TestServer) Visit(t *testing.T, endpoint string) *http.Response {
 	t.Helper()
 

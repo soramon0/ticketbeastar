@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io"
 	"testing"
-	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
 
@@ -13,7 +12,7 @@ import (
 
 func TestUsersController(t *testing.T) {
 	ts := tests.NewTestServer(t)
-	defer database.CloseConnection(ts.Db)
+	defer ts.CloseConnection(t)
 
 	testCases := map[string]func(t *testing.T){
 		"can list users": func(t *testing.T) {

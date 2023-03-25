@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"testing"
 	"ticketbeastar/pkg/controllers"
-	"ticketbeastar/pkg/database"
 	"ticketbeastar/pkg/models"
 	"ticketbeastar/tests"
 	"time"
@@ -20,7 +19,7 @@ import (
 
 func TestPurchaseTickets(t *testing.T) {
 	ts := tests.NewTestServer(t)
-	defer database.CloseConnection(ts.Db)
+	defer ts.CloseConnection(t)
 
 	validPaymentToken := "valid payment token"
 
@@ -59,6 +58,8 @@ func TestPurchaseTickets(t *testing.T) {
 
 			ts.AssertResponseError(t, api.Error, nil)
 			assertOrder(t, api.Data, email, ticketQuantity, 3250*ticketQuantity)
+
+			// assert no charge was made
 		},
 		"customer cannot purchase tickets to an unpublished concert": func(t *testing.T) {
 			concert := tests.CreateConcert(t, ts.Db, &models.Concert{PublishedAt: bun.NullTime{}}, true)
