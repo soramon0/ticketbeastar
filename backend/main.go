@@ -19,7 +19,9 @@ func main() {
 
 	logger := utils.InitLogger()
 	db := database.OpenConnection(utils.GetDatabaseURL(), verboseDb, logger)
-	defer database.CloseConnection(db)
+	defer func() {
+		utils.Must(database.CloseConnection(db))
+	}()
 
 	app := fiber.New(configs.FiberConfig())
 	services := models.NewServices(db)

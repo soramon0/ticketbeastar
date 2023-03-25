@@ -38,6 +38,6 @@ func OpenConnection(dsn string, verbose bool, l *log.Logger) *bun.DB {
 	return db
 }
 
-func CloseConnection(db *bun.DB) {
-	utils.Must(db.Close())
+func CloseConnection(db *bun.DB) error {
+	return db.Close()
 }
